@@ -10,30 +10,31 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["'Syne'", "sans-serif"],
+        display: ["'Bebas Neue'", "Impact", "sans-serif"],
       },
       colors: {
         brand: {
-          black: "#0A0A0A",
-          slate: "#1C1C1E",
-          mid: "#6B6B6B",
-          light: "#F5F5F5",
-          white: "#FFFFFF",
-          accent: "#2563EB",
+          red: "#E11D2A",
+          redDark: "#B3121E",
+          black: "#0A0A0B",
+          ink: "#121214",
+          card: "#18181B",
+          line: "#27272A",
+          muted: "#A1A1AA",
         },
       },
       animation: {
-        "fade-up": "fadeUp 0.6s ease forwards",
-        "fade-in": "fadeIn 0.5s ease forwards",
+        marquee: "marquee 30s linear infinite",
+        "fade-up": "fadeUp 0.8s ease both",
       },
       keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
         fadeUp: {
           "0%": { opacity: "0", transform: "translateY(24px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
         },
       },
     },

@@ -1,13 +1,13 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import Equipment from "@/components/Equipment";
-import Branches from "@/components/Branches";
-import Timings from "@/components/Timings";
-import Membership from "@/components/Membership";
-import Trainers from "@/components/Trainers";
-import Testimonials from "@/components/Testimonials";
+import Marquee from "@/components/Marquee";
+import About from "@/components/About";
+import Programs from "@/components/Programs";
+import Coach from "@/components/Coach";
+import Plans from "@/components/Plans";
 import Gallery from "@/components/Gallery";
-import Contact from "@/components/Contact";
+import Visit from "@/components/Visit";
+import JoinCTA from "@/components/JoinCTA";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -16,14 +16,14 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Equipment />
-        <Branches />
-        <Timings />
-        <Membership />
-        <Trainers />
-        <Testimonials />
+        <Marquee />
+        <About />
+        <Programs />
+        <Coach />
+        <Plans />
         <Gallery />
-        <Contact />
+        <Visit />
+        <JoinCTA />
       </main>
       <Footer />
     </>

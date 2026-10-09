@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kesh Fitness – Elevate Your Strength",
+  title: "Kesh Fitness – Unisex Multi Gym near Silli Stadium",
   description:
-    "Kesh Fitness offers premium gym facilities, world-class equipment, expert trainers, and multiple branches across the city. Join us and transform your life.",
+    "Kesh Fitness is a unisex multi gym near Silli Stadium. Strength training, fat loss, muscle gain and personal guidance from Team Invincible Kesh.",
 };
 
 export default function RootLayout({

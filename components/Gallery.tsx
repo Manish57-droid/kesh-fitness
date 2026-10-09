@@ -1,124 +1,49 @@
-"use client";
-const items = [
-  { label: "Weight Room", emoji: "🏋️", bg: "#0A0A0A", color: "#fff" },
-  { label: "Cardio Zone", emoji: "🚴", bg: "#2563EB", color: "#fff" },
-  { label: "Boxing Ring", emoji: "🥊", bg: "#1C1C1E", color: "#fff" },
-  { label: "Yoga Studio", emoji: "🧘", bg: "#F5F5F5", color: "#0A0A0A" },
-  { label: "Recovery Area", emoji: "🛁", bg: "#EFF6FF", color: "#2563EB" },
-  { label: "Juice Bar", emoji: "🥤", bg: "#F5F5F5", color: "#0A0A0A" },
-  { label: "Functional Zone", emoji: "⚡", bg: "#0A0A0A", color: "#fff" },
-  { label: "Locker Rooms", emoji: "🔐", bg: "#2563EB", color: "#fff" },
-];
+import { Instagram } from "lucide-react";
+import Photo from "./Photo";
+import { site } from "@/lib/site";
+
+// Drop images named gallery-1.jpg … gallery-8.jpg into public/images/.
+const images = Array.from({ length: 8 }, (_, i) => `/images/gallery-${i + 1}.jpg`);
+// Make a few tiles larger for a mosaic layout.
+const spans: Record<number, string> = { 0: "md:col-span-2 md:row-span-2", 5: "md:col-span-2" };
 
 export default function Gallery() {
   return (
-    <section id="gallery" style={{ padding: "6rem 2rem", background: "#fff" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <p className="section-label">Facility Gallery</p>
-        <span className="divider" />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            flexWrap: "wrap",
-            gap: "1.5rem",
-            marginBottom: "3rem",
-          }}
-        >
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: "clamp(2rem, 4vw, 3.2rem)",
-              fontWeight: 700,
-              color: "#0A0A0A",
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            See It to
-            <br />
-            Believe It.
-          </h2>
-          <p
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: "0.9rem",
-              color: "#6B6B6B",
-              maxWidth: 300,
-              lineHeight: 1.7,
-            }}
-          >
-            Our facilities are designed to make every session feel premium — because
-            your environment shapes your performance.
-          </p>
+    <section id="gallery" className="section">
+      <div className="container-x">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p className="eyebrow">Inside the Gym</p>
+            <h2 className="heading mt-5">
+              The <span className="text-brand-red">Grind</span>
+            </h2>
+          </div>
+          <a href={site.instagram} target="_blank" rel="noreferrer" className="btn-ghost self-start md:self-auto">
+            <Instagram className="h-4 w-4" /> @{site.instagramHandle}
+          </a>
         </div>
 
-        {/* Masonry-style grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gridTemplateRows: "repeat(2, 200px)",
-            gap: "1rem",
-          }}
-          className="gallery-grid"
-        >
-          {items.map((item, i) => (
-            <div
-              key={item.label}
-              style={{
-                background: item.bg,
-                borderRadius: "12px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "0.75rem",
-                cursor: "pointer",
-                transition: "transform 0.25s, box-shadow 0.25s",
-                gridColumn:
-                  i === 0 ? "span 2" : i === 5 ? "span 2" : "span 1",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.02)";
-                e.currentTarget.style.boxShadow = "0 16px 48px rgba(0,0,0,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
+        <div className="mt-12 grid auto-rows-[160px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4">
+          {images.map((src, i) => (
+            <a
+              key={src}
+              href={site.instagram}
+              target="_blank"
+              rel="noreferrer"
+              className={`group relative overflow-hidden ${spans[i] ?? ""}`}
             >
-              <span style={{ fontSize: "2.5rem" }}>{item.emoji}</span>
-              <span
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  color: item.color,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {item.label}
-              </span>
-            </div>
+              <Photo
+                src={src}
+                alt={`Kesh Fitness gallery photo ${i + 1}`}
+                className="h-full w-full transition duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-brand-red/70 opacity-0 transition group-hover:opacity-100">
+                <Instagram className="h-8 w-8" />
+              </div>
+            </a>
           ))}
         </div>
-
-        <p
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.8rem",
-            color: "#9CA3AF",
-            textAlign: "center",
-            marginTop: "1.5rem",
-          }}
-        >
-          Photo gallery coming soon — visit any branch for a free tour.
-        </p>
       </div>
-
-      
     </section>
   );
 }
