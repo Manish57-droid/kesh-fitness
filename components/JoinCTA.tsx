@@ -25,7 +25,7 @@ export default function JoinCTA() {
           href={joinHref}
           target="_blank"
           rel="noreferrer"
-          className="btn shrink-0 bg-brand-black text-white hover:bg-black"
+          className="btn shrink-0 bg-neutral-950 text-white hover:bg-black"
         >
           Join Kesh Fitness <ArrowRight className="h-4 w-4" />
         </a>

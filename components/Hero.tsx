@@ -19,7 +19,7 @@ export default function Hero() {
           <span className="text-brand-red">Stay Invincible.</span>
         </h1>
 
-        <p className="mt-6 max-w-xl animate-fade-up text-base text-white/70 md:text-lg">
+        <p className="mt-6 max-w-xl animate-fade-up text-base text-fg/70 md:text-lg">
           Your neighbourhood gym for real strength, fat loss and muscle gain, with coaching from{" "}
           {site.team}. Everyone is welcome, whether it's your first day or your hundredth.
         </p>
@@ -33,7 +33,7 @@ export default function Hero() {
           </a>
         </div>
 
-        <p className="mt-10 flex items-center gap-2 text-sm text-white/60">
+        <p className="mt-10 flex items-center gap-2 text-sm text-fg/60">
           <MapPin className="h-4 w-4 text-brand-red" /> {site.address}
         </p>
       </div>

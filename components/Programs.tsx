@@ -46,19 +46,19 @@ export default function Programs() {
               For <span className="text-brand-red">Results</span>
             </h2>
           </div>
-          <p className="max-w-md text-white/60">
+          <p className="max-w-md text-fg/60">
             Whatever your goal, there's a plan for you. Talk to us and we'll help you pick the right
             starting point.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-px overflow-hidden border border-brand-line bg-brand-line sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-px sm:mt-14 overflow-hidden border border-brand-line bg-brand-line sm:grid-cols-2 lg:grid-cols-3">
           {programs.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="group relative bg-brand-ink p-8 transition hover:bg-brand-card">
+            <div key={title} className="group relative bg-brand-ink p-6 transition hover:bg-brand-card sm:p-8">
               <span className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 bg-brand-red transition-transform duration-300 group-hover:scale-x-100" />
               <Icon className="h-9 w-9 text-brand-red" strokeWidth={1.5} />
               <h3 className="mt-6 font-display text-3xl tracking-wide">{title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-white/60">{text}</p>
+              <p className="mt-3 text-sm leading-relaxed text-fg/60">{text}</p>
             </div>
           ))}
         </div>

@@ -3,14 +3,37 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; }
+/* Theme colours as RGB channels so Tailwind opacity modifiers work (e.g. text-fg/70). */
+:root {
+  --c-bg: 250 250 249;
+  --c-ink: 241 241 239;
+  --c-card: 255 255 255;
+  --c-line: 228 228 231;
+  --c-muted: 113 113 122;
+  --c-fg: 10 10 11;
+  color-scheme: light;
+}
+.dark {
+  --c-bg: 10 10 11;
+  --c-ink: 18 18 20;
+  --c-card: 24 24 27;
+  --c-line: 39 39 42;
+  --c-muted: 161 161 170;
+  --c-fg: 255 255 255;
+  color-scheme: dark;
+}
+
+/* scroll-padding keeps anchored sections clear of the fixed navbar. */
+html { scroll-behavior: smooth; scroll-padding-top: 4rem; -webkit-tap-highlight-color: transparent; }
 body {
-  @apply bg-brand-black text-white font-sans antialiased;
+  /* Bottom padding leaves room for the mobile tab bar. */
+  @apply bg-brand-black pb-[calc(4rem+env(safe-area-inset-bottom))] text-fg font-sans antialiased transition-colors duration-300 lg:pb-0;
+  overflow-x: clip;
 }
 
 @layer components {
   .container-x { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
-  .section { @apply py-20 md:py-28; }
+  .section { @apply py-16 md:py-28; }
 
   .eyebrow {
     @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-brand-red;
@@ -20,10 +43,23 @@ body {
   .heading { @apply font-display text-5xl leading-[0.95] tracking-wide md:text-7xl; }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-sm px-6 py-3.5 text-sm font-semibold uppercase tracking-wider transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-sm px-6 py-3.5 text-sm font-semibold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-primary { @apply btn bg-brand-red text-white hover:bg-brand-redDark; }
-  .btn-ghost { @apply btn border border-white/25 text-white hover:border-white hover:bg-white/5; }
+  .btn-ghost { @apply btn border border-fg/25 text-fg hover:border-fg hover:bg-fg/5; }
+  .btn-sm { @apply min-h-[44px] px-4 py-2 text-xs sm:min-h-0; }
+
+  .icon-btn {
+    @apply relative flex h-11 w-11 items-center justify-center rounded-sm border sm:h-10 sm:w-10 border-brand-line text-fg/80 transition hover:border-brand-red hover:text-fg;
+  }
+
+  .card { @apply border border-brand-line bg-brand-card p-5 sm:p-6; }
+
+  .label { @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-brand-muted; }
+  /* 16px text on phones stops iOS from zooming into inputs. */
+  .input {
+    @apply w-full rounded-sm border border-brand-line bg-brand-black px-3.5 py-3 text-base text-fg outline-none sm:py-2.5 sm:text-sm transition placeholder:text-brand-muted focus:border-brand-red;
+  }
 
   .photo-fallback {
     @apply flex items-center justify-center bg-brand-card;

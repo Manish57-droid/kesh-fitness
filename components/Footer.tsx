@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Instagram, Youtube } from "lucide-react";
 import { site } from "@/lib/site";
 
@@ -25,7 +26,7 @@ export default function Footer() {
               target="_blank"
               rel="noreferrer"
               aria-label={label}
-              className="flex h-10 w-10 items-center justify-center border border-brand-line transition hover:border-brand-red hover:bg-brand-red"
+              className="flex h-10 w-10 items-center justify-center border border-brand-line transition hover:border-brand-red hover:bg-brand-red hover:text-white"
             >
               <Icon className="h-4 w-4" />
             </a>
@@ -34,6 +35,10 @@ export default function Footer() {
 
         <p className="text-xs text-brand-muted">
           © {new Date().getFullYear()} {site.name}. All rights reserved.
+          <span className="mx-2">·</span>
+          <Link href="/admin/login" className="hover:text-fg">
+            Admin
+          </Link>
         </p>
       </div>
     </footer>

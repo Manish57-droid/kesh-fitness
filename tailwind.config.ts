@@ -6,21 +6,24 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         display: ["'Bebas Neue'", "Impact", "sans-serif"],
       },
+      // Theme-aware colours come from CSS variables in globals.css (light on :root, dark on .dark).
       colors: {
+        fg: "rgb(var(--c-fg) / <alpha-value>)",
         brand: {
           red: "#E11D2A",
           redDark: "#B3121E",
-          black: "#0A0A0B",
-          ink: "#121214",
-          card: "#18181B",
-          line: "#27272A",
-          muted: "#A1A1AA",
+          black: "rgb(var(--c-bg) / <alpha-value>)",
+          ink: "rgb(var(--c-ink) / <alpha-value>)",
+          card: "rgb(var(--c-card) / <alpha-value>)",
+          line: "rgb(var(--c-line) / <alpha-value>)",
+          muted: "rgb(var(--c-muted) / <alpha-value>)",
         },
       },
       animation: {

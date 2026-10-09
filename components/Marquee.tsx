@@ -3,7 +3,7 @@ const words = ["Strength", "Discipline", "Consistency", "Power", "Sweat", "Invin
 export default function Marquee() {
   const row = [...words, ...words];
   return (
-    <div className="overflow-hidden border-y border-brand-redDark bg-brand-red py-4" aria-hidden>
+    <div className="overflow-hidden border-y border-brand-redDark bg-brand-red py-4 text-white" aria-hidden>
       <div className="flex w-max animate-marquee">
         {[0, 1].map((copy) => (
           <div key={copy} className="flex">

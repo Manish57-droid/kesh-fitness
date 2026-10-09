@@ -37,7 +37,7 @@ export default function Gallery() {
                 alt={`Kesh Fitness gallery photo ${i + 1}`}
                 className="h-full w-full transition duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-brand-red/70 opacity-0 transition group-hover:opacity-100">
+              <div className="absolute inset-0 flex items-center justify-center bg-brand-red/70 text-white opacity-0 transition group-hover:opacity-100">
                 <Instagram className="h-8 w-8" />
               </div>
             </a>
