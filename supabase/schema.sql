@@ -1,11 +1,12 @@
 -- Kesh Fitness database schema.
--- Run this once in Supabase: Dashboard → SQL Editor → New query → paste → Run.
+-- Run it in Supabase: Dashboard → SQL Editor → New query → paste → Run.
+-- Safe to run again after updates; existing data is kept.
 --
--- Visitors don't log in. They can read announcements and send messages; only the
--- admin logs in (create the admin in Authentication → Users → Add user).
+-- Visitors don't log in. They can browse products, read announcements, send messages and submit the
+-- join form. Only the admin logs in (create the admin in Authentication → Users → Add user).
 --
--- If you ran an older version of this file, uncomment this block first to start clean:
--- drop table if exists public.notification_reads, public.workouts, public.messages, public.notifications cascade;
+-- Only if you ran the very first version (with member accounts), uncomment this to start clean:
+-- drop table if exists public.notification_reads, public.workouts, public.messages, public.notifications, public.join_requests cascade;
 -- drop function if exists public.touch_last_seen(), public.set_user_role(uuid, text);
 
 -- ─────────────────────────────────────────────────────────────
@@ -137,6 +138,116 @@ begin
   alter publication supabase_realtime add table public.notifications;
 exception when duplicate_object then null;
 end $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- Membership sign-ups from the "Join Kesh Fitness" form
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.join_requests (
+  id bigint generated always as identity primary key,
+  name text not null check (char_length(name) between 1 and 60),
+  phone text not null check (char_length(phone) between 10 and 15),
+  email text check (char_length(email) <= 100),
+  age smallint check (age between 10 and 90),
+  gender text check (gender in ('male', 'female', 'other')),
+  plan text not null check (plan in ('gym', 'cardio')),
+  timing text check (timing in ('morning', 'evening')),
+  goal text check (char_length(goal) <= 40),
+  area text check (char_length(area) <= 120),
+  notes text check (char_length(notes) <= 500),
+  status text not null default 'new' check (status in ('new', 'contacted', 'joined', 'not_interested')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.join_requests enable row level security;
+
+-- Anyone can submit the form; only the listed columns, so status always starts as 'new'.
+drop policy if exists "join: anyone submits" on public.join_requests;
+create policy "join: anyone submits" on public.join_requests
+  for insert to anon, authenticated with check (true);
+
+revoke insert, update on public.join_requests from anon, authenticated;
+grant insert (name, phone, email, age, gender, plan, timing, goal, area, notes)
+  on public.join_requests to anon, authenticated;
+grant update (status) on public.join_requests to authenticated;
+
+drop policy if exists "join: admin read" on public.join_requests;
+create policy "join: admin read" on public.join_requests
+  for select to authenticated using (public.is_admin());
+
+drop policy if exists "join: admin update" on public.join_requests;
+create policy "join: admin update" on public.join_requests
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "join: admin delete" on public.join_requests;
+create policy "join: admin delete" on public.join_requests
+  for delete to authenticated using (public.is_admin());
+
+-- ─────────────────────────────────────────────────────────────
+-- Shop products, managed by the admin
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.products (
+  id bigint generated always as identity primary key,
+  name text not null check (char_length(name) between 1 and 80),
+  description text check (char_length(description) <= 300),
+  category text check (char_length(category) <= 40),
+  price integer not null check (price >= 0),          -- in rupees
+  mrp integer check (mrp >= 0),                        -- optional original price, shown struck through
+  image_url text,
+  in_stock boolean not null default true,
+  is_active boolean not null default true,             -- false = hidden from the website
+  sort_order integer not null default 0,               -- lower numbers show first
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists products_touch_updated_at on public.products;
+create trigger products_touch_updated_at
+  before update on public.products
+  for each row execute function public.touch_updated_at();
+
+alter table public.products enable row level security;
+
+drop policy if exists "products: public reads visible" on public.products;
+create policy "products: public reads visible" on public.products
+  for select to anon, authenticated using (is_active or public.is_admin());
+
+drop policy if exists "products: admin insert" on public.products;
+create policy "products: admin insert" on public.products
+  for insert to authenticated with check (public.is_admin());
+
+drop policy if exists "products: admin update" on public.products;
+create policy "products: admin update" on public.products
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "products: admin delete" on public.products;
+create policy "products: admin delete" on public.products
+  for delete to authenticated using (public.is_admin());
+
+-- Public bucket for product photos (max 5 MB, images only). Only admins can upload or delete.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('products', 'products', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set public = true, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "product images: admin upload" on storage.objects;
+create policy "product images: admin upload" on storage.objects
+  for insert to authenticated with check (bucket_id = 'products' and public.is_admin());
+
+drop policy if exists "product images: admin update" on storage.objects;
+create policy "product images: admin update" on storage.objects
+  for update to authenticated using (bucket_id = 'products' and public.is_admin());
+
+drop policy if exists "product images: admin delete" on storage.objects;
+create policy "product images: admin delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'products' and public.is_admin());
 
 -- ─────────────────────────────────────────────────────────────
 -- Make the admin (after adding the user in Authentication → Users):

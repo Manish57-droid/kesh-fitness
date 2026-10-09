@@ -2,10 +2,15 @@ import { Instagram } from "lucide-react";
 import Photo from "./Photo";
 import { site } from "@/lib/site";
 
-// Drop images named gallery-1.jpg … gallery-8.jpg into public/images/.
-const images = Array.from({ length: 8 }, (_, i) => `/images/gallery-${i + 1}.jpg`);
-// Make a few tiles larger for a mosaic layout.
-const spans: Record<number, string> = { 0: "md:col-span-2 md:row-span-2", 5: "md:col-span-2" };
+// Photos live in public/images. `pos` keeps faces in frame when cropped.
+const images = [
+  { src: "/images/gallery-1.jpg", alt: "Kesh posing on the rocks", pos: "object-[50%_20%]" },
+  { src: "/images/gallery-2.jpg", alt: "Kesh smiling outdoors", pos: "object-top" },
+  { src: "/images/gallery-3.jpg", alt: "Kesh by the river", pos: "object-[50%_25%]" },
+  { src: "/images/gallery-4.jpg", alt: "Kesh flexing biceps", pos: "object-top" },
+  { src: "/images/gallery-5.jpg", alt: "Kesh hitting a double biceps pose at a competition", pos: "object-top" },
+  { src: "/images/gallery-6.jpg", alt: "Kesh backstage at a bodybuilding competition", pos: "object-top" },
+];
 
 export default function Gallery() {
   return (
@@ -23,19 +28,19 @@ export default function Gallery() {
           </a>
         </div>
 
-        <div className="mt-12 grid auto-rows-[160px] grid-cols-2 gap-3 md:auto-rows-[220px] md:grid-cols-4">
-          {images.map((src, i) => (
+        <div className="mt-10 grid grid-cols-2 gap-2 sm:gap-3 md:mt-12 md:grid-cols-3">
+          {images.map(({ src, alt, pos }) => (
             <a
               key={src}
               href={site.instagram}
               target="_blank"
               rel="noreferrer"
-              className={`group relative overflow-hidden ${spans[i] ?? ""}`}
+              className="group relative aspect-[4/5] overflow-hidden"
             >
               <Photo
                 src={src}
-                alt={`Kesh Fitness gallery photo ${i + 1}`}
-                className="h-full w-full transition duration-500 group-hover:scale-105"
+                alt={alt}
+                className={`h-full w-full transition duration-500 group-hover:scale-105 ${pos}`}
               />
               <div className="absolute inset-0 flex items-center justify-center bg-brand-red/70 text-white opacity-0 transition group-hover:opacity-100">
                 <Instagram className="h-8 w-8" />

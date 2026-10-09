@@ -9,11 +9,11 @@ import NotificationBell from "./NotificationBell";
 import { useAuth } from "./auth/AuthProvider";
 
 const links = [
-  { label: "About", href: "/#about" },
   { label: "Programs", href: "/#programs" },
   { label: "Planner", href: "/#planner" },
   { label: "Plans", href: "/#plans" },
-  { label: "Gallery", href: "/#gallery" },
+  { label: "Shop", href: "/#shop" },
+  { label: "Join", href: "/#join" },
   { label: "Contact", href: "/#contact" },
   { label: "Visit", href: "/#visit" },
 ];
@@ -40,7 +40,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
       }`}
     >
       <nav className="container-x flex h-16 items-center justify-between gap-4 md:h-20">
-        <Link href="/" className="shrink-0 font-display text-2xl tracking-wider sm:text-3xl">
+        <Link href="/" className="shrink-0 font-display text-xl tracking-wider min-[400px]:text-2xl sm:text-3xl">
           KESH <span className="text-brand-red">FITNESS</span>
         </Link>
 
@@ -57,12 +57,12 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
           ))}
         </ul>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
           <NotificationBell />
           <UserMenu />
           {!user && (
-            <a href={joinHref} target="_blank" rel="noreferrer" className="btn-primary btn-sm hidden xl:inline-flex">
+            <a href={joinHref} className="btn-primary btn-sm hidden xl:inline-flex">
               Join Now
             </a>
           )}
@@ -92,7 +92,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
               </li>
             ))}
             <li className="pt-3">
-              <a href={joinHref} target="_blank" rel="noreferrer" className="btn-primary w-full">
+              <a href={joinHref} className="btn-primary w-full">
                 Join Now
               </a>
             </li>

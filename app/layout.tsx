@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/auth/AuthProvider";
-import MobileNav from "@/components/MobileNav";
 
 export const metadata: Metadata = {
   title: "Kesh Fitness – Unisex Multi Gym near Silli Stadium",
@@ -23,10 +22,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <AuthProvider>
-          {children}
-          <MobileNav />
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

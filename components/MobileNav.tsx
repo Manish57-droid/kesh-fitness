@@ -1,9 +1,9 @@
-import { CalendarDays, Home, MapPin, MessageSquare, Tag } from "lucide-react";
+import { MapPin, MessageSquare, ShoppingBag, Tag, UserPlus } from "lucide-react";
 
 const items = [
-  { href: "/#top", label: "Home", Icon: Home },
   { href: "/#plans", label: "Plans", Icon: Tag },
-  { href: "/#planner", label: "Planner", Icon: CalendarDays },
+  { href: "/#shop", label: "Shop", Icon: ShoppingBag },
+  { href: "/#join", label: "Join", Icon: UserPlus, highlight: true },
   { href: "/#contact", label: "Message", Icon: MessageSquare },
   { href: "/#visit", label: "Visit", Icon: MapPin },
 ];
@@ -16,13 +16,21 @@ export default function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-line bg-brand-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
       <ul className="grid grid-cols-5">
-        {items.map(({ href, label, Icon }) => (
+        {items.map(({ href, label, Icon, highlight }) => (
           <li key={href}>
             <a
               href={href}
-              className="flex h-16 flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-fg/60 transition active:text-brand-red"
+              className={`flex h-16 flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider transition ${
+                highlight ? "text-brand-red" : "text-fg/60 active:text-brand-red"
+              }`}
             >
-              <Icon className="h-5 w-5" />
+              {highlight ? (
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-red text-white">
+                  <Icon className="h-4 w-4" />
+                </span>
+              ) : (
+                <Icon className="h-5 w-5" />
+              )}
               {label}
             </a>
           </li>

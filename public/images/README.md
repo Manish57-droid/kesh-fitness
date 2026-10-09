@@ -1,12 +1,13 @@
 # Gym photos
 
-Save photos here with these exact names (JPG). Until a file exists, the site shows a red-striped placeholder.
+Replace any of these files to change the photo on the site (keep the same name, JPG, ideally under ~300 KB).
 
-| File | Where it shows | Best shape |
-|---|---|---|
-| hero.jpg | Full-screen background at the top | Wide (landscape), gym floor / action shot |
-| about.jpg | About section | Portrait (4:5) |
-| coach.jpg | "Meet Kesh" section | Portrait (4:5), photo of the owner |
-| gallery-1.jpg … gallery-8.jpg | Gallery grid | Square or any; gallery-1 is the big tile |
+| File | Where it shows |
+|---|---|
+| hero.jpg | Top of the page (right side on desktop, background on phones) |
+| about.jpg | About section |
+| coach.jpg | "Meet Kesh" section |
+| transformation.jpg | Kesh's before/after under "Meet Kesh" |
+| gallery-1.jpg … gallery-6.jpg | "The Grind" gallery |
 
-Tip: download from Instagram (@teaminvinciblekesh / @fit_kesh_official) and keep each under ~500 KB.
+If a file is missing, the site shows a red-striped placeholder instead.

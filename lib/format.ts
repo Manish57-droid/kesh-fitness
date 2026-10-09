@@ -32,3 +32,29 @@ export function initials(name: string | null | undefined, email?: string | null)
   const parts = src.split(/[\s@.]+/).filter(Boolean);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
+
+/** Today's date as "YYYY-MM-DD" in the viewer's time zone. */
+export function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Adds whole months to a "YYYY-MM-DD" date, clamping to month end (31 Jan + 1 → 28/29 Feb). */
+export function addMonths(iso: string, months: number) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const target = new Date(y, m - 1 + months, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(d, lastDay));
+  return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}-${String(target.getDate()).padStart(2, "0")}`;
+}
+
+/** Whole days from `from` to `to` (both "YYYY-MM-DD"); negative if `to` is earlier. */
+export function daysBetween(from: string, to: string) {
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
+}
+
+/** Formats a "YYYY-MM-DD" date without time-zone shifts. */
+export function formatDay(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}

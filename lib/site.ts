@@ -31,9 +31,29 @@ export const site = {
   ],
 };
 
-/** Best "join" link: WhatsApp if configured, otherwise Instagram DM. */
-export const joinHref = site.whatsapp
-  ? `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
-      "Hi! I'd like to join Kesh Fitness."
-    )}`
-  : site.instagramDM;
+// Prices in rupees.
+export const pricing = {
+  joiningFee: 1000,
+  plans: [
+    {
+      id: "gym",
+      name: "Gym",
+      monthly: 500,
+      perks: ["Full access to weights & machines", "Strength training area", "Form & workout guidance"],
+    },
+    {
+      id: "cardio",
+      name: "Gym + Cardio",
+      monthly: 800,
+      perks: ["Everything in the Gym plan", "Treadmill & cardio machines", "Fat-loss friendly routines"],
+      featured: true,
+    },
+  ],
+};
+
+export type PlanId = (typeof pricing.plans)[number]["id"];
+
+export const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+/** All "Join" buttons lead to the membership form on the home page. */
+export const joinHref = "/#join";

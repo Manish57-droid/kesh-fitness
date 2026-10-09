@@ -9,37 +9,72 @@ npm install
 npm run dev
 ```
 
-The site and the workout planner work without any setup. The message form, announcements and the admin panel need Supabase (below).
+The site and the workout planner work without any setup. The join form, message form, announcements and the admin panel need Supabase (below).
 
-## Supabase setup (messages, announcements, admin)
+## Supabase setup
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. **Database:** open *SQL Editor → New query*, paste all of [`supabase/schema.sql`](supabase/schema.sql), and click *Run*.
-3. **Keys:** copy `.env.local.example` to `.env.local` and fill in the values from *Project Settings → API*:
-   - `NEXT_PUBLIC_SUPABASE_URL`: the Project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the `anon` / publishable key
-4. **Block public sign-ups:** in *Authentication → Sign In / Providers*, turn off *Allow new users to sign up*.
-5. **Create the admin:** *Authentication → Users → Add user → Create new user* (tick *Auto Confirm User*), then run:
-   ```sql
-   update public.profiles set role = 'admin' where email = 'you@example.com';
-   ```
-6. Restart `npm run dev` and sign in at `/admin/login` (there's also a small *Admin* link in the footer).
+**1. Create a project**
+- Sign up at [supabase.com](https://supabase.com) and click *New project*.
+- Pick a name (e.g. `kesh-fitness`), set a database password (save it somewhere), and choose the **Mumbai (ap-south-1)** region.
+- Wait a minute or two for it to finish setting up.
+
+**2. Create the tables**
+- Left sidebar → *SQL Editor* → *New query*.
+- Paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click *Run*. It should say "Success. No rows returned".
+- This creates: `profiles` (admin role), `join_requests`, `messages`, `notifications`, `products`, a public `products` storage bucket for product photos, the security rules, and live updates for announcements.
+- Safe to run again whenever the file changes.
+- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (currently `002_members.sql`, which adds Active Members). Each file only contains new changes, so you never need to re-run old ones.
+
+**3. Connect the website**
+- Left sidebar → *Project Settings* → *API* (or *API Keys*).
+- In the project folder, copy `.env.local.example` to a new file named `.env.local` and fill in:
+  ```
+  NEXT_PUBLIC_SUPABASE_URL=<Project URL>
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon / publishable key>
+  ```
+- Never put the `service_role` / secret key in this file.
+
+**4. Turn off public sign-ups**
+- *Authentication* → *Sign In / Providers* → turn off **Allow new users to sign up** → *Save*.
+- Only the admin account you create next will be able to log in.
+
+**5. Create the admin account**
+- *Authentication* → *Users* → *Add user* → *Create new user*.
+- Enter the admin email and a strong password, tick **Auto Confirm User**, then *Create user*.
+- Back in the *SQL Editor*, run (with that email):
+  ```sql
+  update public.profiles set role = 'admin' where email = 'admin@example.com';
+  ```
+
+**6. Restart and test**
+- Stop and restart `npm run dev` so it picks up `.env.local`.
+- Submit the join form and send a message from the home page.
+- Click **Login** in the navbar, sign in, and check that both show up in the Admin Panel.
+- Send an announcement and check that the bell on the home page lights up.
+- In the *Products* tab, add a product with a photo and check it appears in the Shop section.
+- In *Active Members*, add a member (or use *Add as member* on a join request).
+
+**When you deploy (e.g. Vercel):** add the same two `NEXT_PUBLIC_SUPABASE_…` variables in the hosting provider's environment settings.
 
 ## Who can do what
 
 | | Visitor (no login) | Admin |
 |---|---|---|
 | View the whole website, light/dark theme | ✓ | ✓ |
+| Fill the "Join Kesh Fitness" form | ✓ | ✓ |
 | Weekly workout planner (saved on their own phone) | ✓ | ✓ |
 | Message the gym and see replies on the site | ✓ | ✓ |
 | Announcement bell + live pop-ups | ✓ | ✓ |
-| Admin Panel (`/admin`): read, reply to, call or WhatsApp senders | | ✓ |
+| Browse the Shop and order a product | ✓ | ✓ |
+| Admin Panel (`/admin`): join requests, messages, replies, call / WhatsApp | | ✓ |
+| Active Members: details, fees-paid tracking, active / inactive | | ✓ |
+| Add, edit, hide and delete products (with photos), mark in / out of stock | | ✓ |
 | Send announcements to everyone | | ✓ |
 
-Access rules are enforced in the database with Row Level Security. Visitors can only send messages and read their own replies, using a secret token saved in their browser.
+Access rules are enforced in the database with Row Level Security. Visitors can only add join requests and messages, read visible products, and read their own message replies using a secret token saved in their browser. Only the admin can upload or delete product photos.
 
 ## Editing content
 
-- Gym details (address, phone, WhatsApp, timings, social links): [`lib/site.ts`](lib/site.ts)
-- Photos: see [`public/images/README.md`](public/images/README.md)
+- Gym details, prices, timings, social links: [`lib/site.ts`](lib/site.ts)
+- Photos: [`public/images/`](public/images/) (see the README there)
 - Exercise suggestions in the planner: [`lib/exercises.ts`](lib/exercises.ts)

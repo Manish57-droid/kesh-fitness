@@ -1,0 +1,139 @@
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import { MessageCircle, ShoppingBag } from "lucide-react";
+import Photo from "../Photo";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { PREFILL_MESSAGE_EVENT } from "@/lib/events";
+import { rupees, site } from "@/lib/site";
+import type { Product } from "@/lib/types";
+
+const orderText = (p: Product) => `Hi, I'd like to buy ${p.name} (${rupees(p.price)}). Is it available?`;
+
+export default function Shop() {
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [category, setCategory] = useState("All");
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return setProducts([]);
+    createClient()
+      .from("products")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setProducts((data as Product[]) ?? []));
+  }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set((products ?? []).map((p) => p.category).filter(Boolean) as string[]);
+    return ["All", ...Array.from(set).sort()];
+  }, [products]);
+
+  const shown = (products ?? []).filter((p) => category === "All" || p.category === category);
+
+  // WhatsApp if a number is configured; otherwise pre-fill the on-site message form.
+  const order = (p: Product) => {
+    if (site.whatsapp) {
+      window.open(`https://wa.me/${site.whatsapp}?text=${encodeURIComponent(orderText(p))}`, "_blank");
+      return;
+    }
+    window.dispatchEvent(new CustomEvent<string>(PREFILL_MESSAGE_EVENT, { detail: orderText(p) }));
+    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <section id="shop" className="section bg-brand-ink">
+      <div className="container-x">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <p className="eyebrow">Gym Store</p>
+            <h2 className="heading mt-5">
+              Fuel Your <span className="text-brand-red">Gains</span>
+            </h2>
+          </div>
+          <p className="max-w-md text-sm text-fg/60">
+            Supplements and gear, available at the gym. Tap Order and we&apos;ll keep it ready for you.
+          </p>
+        </div>
+
+        {categories.length > 2 && (
+          <div className="-mx-4 mt-8 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`shrink-0 border px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                  category === c ? "border-brand-red bg-brand-red text-white" : "border-brand-line text-fg/60 hover:text-fg"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {products === null ? (
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="aspect-[3/4] animate-pulse bg-brand-card" />
+            ))}
+          </div>
+        ) : shown.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center border border-dashed border-brand-line px-4 py-14 text-center">
+            <ShoppingBag className="h-10 w-10 text-brand-red/60" strokeWidth={1.5} />
+            <p className="mt-4 font-display text-2xl tracking-wide">Products coming soon</p>
+            <p className="mt-1 text-sm text-brand-muted">Ask at the gym counter for supplements and gear.</p>
+          </div>
+        ) : (
+          <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {shown.map((p) => {
+              const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+              return (
+                <li key={p.id} className="flex flex-col border border-brand-line bg-brand-card">
+                  <div className="relative">
+                    <Photo
+                      src={p.image_url ?? ""}
+                      alt={p.name}
+                      className={`aspect-square w-full bg-white ${p.in_stock ? "" : "opacity-50 grayscale"}`}
+                    />
+                    {off > 0 && (
+                      <span className="absolute left-2 top-2 bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        {off}% off
+                      </span>
+                    )}
+                    {!p.in_stock && (
+                      <span className="absolute inset-x-0 bottom-0 bg-black/75 py-1.5 text-center text-[11px] font-bold uppercase tracking-widest text-white">
+                        Out of stock
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-3 sm:p-4">
+                    {p.category && (
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-red">{p.category}</p>
+                    )}
+                    <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{p.name}</h3>
+                    {p.description && (
+                      <p className="mt-1 line-clamp-2 text-xs text-brand-muted">{p.description}</p>
+                    )}
+                    <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-3">
+                      <span className="font-display text-2xl leading-none sm:text-3xl">{rupees(p.price)}</span>
+                      {off > 0 && <span className="text-xs text-brand-muted line-through">{rupees(p.mrp!)}</span>}
+                    </p>
+                    <button
+                      onClick={() => order(p)}
+                      disabled={!p.in_stock}
+                      className="btn-primary btn-sm mt-3 w-full"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> {p.in_stock ? "Order" : "Unavailable"}
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}

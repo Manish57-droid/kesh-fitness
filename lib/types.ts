@@ -41,3 +41,58 @@ export type Notification = {
   created_by: string | null;
   created_at: string;
 };
+
+export type JoinStatus = "new" | "contacted" | "joined" | "not_interested";
+
+/** A membership sign-up from the join form. */
+export type JoinRequest = {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  age: number | null;
+  gender: "male" | "female" | "other" | null;
+  plan: "gym" | "cardio";
+  timing: "morning" | "evening" | null;
+  goal: string | null;
+  area: string | null;
+  notes: string | null;
+  status: JoinStatus;
+  created_at: string;
+};
+
+/** A shop product. Prices are whole rupees. */
+export type Product = {
+  id: number;
+  name: string;
+  description: string | null;
+  category: string | null;
+  price: number;
+  mrp: number | null;
+  image_url: string | null;
+  in_stock: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** A gym member, managed by the admin. Dates are "YYYY-MM-DD". */
+export type Member = {
+  id: number;
+  name: string;
+  phone: string;
+  address: string;
+  email: string | null;
+  age: number | null;
+  gender: "male" | "female" | "other" | null;
+  plan: "gym" | "cardio" | null;
+  joined_on: string;
+  paid_until: string | null;
+  emergency_contact: string | null;
+  notes: string | null;
+  is_active: boolean;
+  join_request_id: number | null;
+  created_at: string;
+  updated_at: string;
+};

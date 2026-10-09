@@ -6,7 +6,7 @@ export default function About() {
     <section id="about" className="section">
       <div className="container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <div className="relative">
-          <Photo src="/images/about.jpg" alt="Members training at Kesh Fitness" className="aspect-[4/5] w-full rounded-sm" />
+          <Photo src="/images/about.jpg" alt="Kesh at the Kesh Fitness gym opening" className="aspect-[4/5] w-full rounded-sm object-[50%_15%]" />
           <div className="absolute -bottom-6 -right-4 hidden bg-brand-red px-8 py-6 text-white sm:block">
             <p className="font-display text-6xl leading-none">110+</p>
             <p className="mt-1 text-xs font-semibold uppercase tracking-widest">Strong Community</p>

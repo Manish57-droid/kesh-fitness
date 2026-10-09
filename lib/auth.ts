@@ -1,10 +1,14 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { Profile } from "@/lib/types";
 
-/** For admin server pages. Sends anyone who isn't a logged-in admin to the admin login. */
-export async function requireAdmin() {
+/**
+ * For admin server pages. Sends anyone who isn't a logged-in admin to the admin login.
+ * Cached per request, so the admin layout and page share one check.
+ */
+export const requireAdmin = cache(async () => {
   if (!isSupabaseConfigured) redirect("/admin/login");
   const supabase = createClient();
   const {
@@ -16,4 +20,4 @@ export async function requireAdmin() {
   const profile = data as Profile | null;
   if (profile?.role !== "admin") redirect("/admin/login?error=not-admin");
   return { supabase, user, profile };
-}
+});

@@ -2,12 +2,12 @@
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogIn, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "./AuthProvider";
 import { initials } from "@/lib/format";
 import { useClickOutside } from "@/lib/useClickOutside";
 
-/** Shown only when the admin is logged in. */
+/** Admin login button, or the admin menu once logged in. */
 export default function UserMenu() {
   const { user, isAdmin, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -16,7 +16,14 @@ export default function UserMenu() {
   const close = useCallback(() => setOpen(false), []);
   useClickOutside(ref, open, close);
 
-  if (!user || !isAdmin) return null;
+  if (!user || !isAdmin) {
+    return (
+      <Link href="/admin/login" className="icon-btn w-auto gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider sm:w-auto sm:gap-2 sm:px-4">
+        <LogIn className="h-4 w-4" />
+        <span>Login</span>
+      </Link>
+    );
+  }
 
   const handleSignOut = async () => {
     setOpen(false);

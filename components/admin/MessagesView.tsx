@@ -8,17 +8,17 @@ import type { Message } from "@/lib/types";
 type Filter = "all" | "unread" | "unreplied";
 
 type Props = {
-  messages: Message[];
-  setMessages: (m: Message[]) => void;
+  initial: Message[];
 };
 
 /** wa.me needs digits only; assume India (+91) for 10-digit numbers. */
-const whatsappLink = (phone: string) => {
+export const whatsappLink = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
   return `https://wa.me/${digits.length === 10 ? `91${digits}` : digits}`;
 };
 
-export default function MessagesTab({ messages, setMessages }: Props) {
+export default function MessagesView({ initial }: Props) {
+  const [messages, setMessages] = useState(initial);
   const [filter, setFilter] = useState<Filter>("all");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);

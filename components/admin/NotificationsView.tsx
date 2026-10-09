@@ -6,11 +6,11 @@ import { timeAgo } from "@/lib/format";
 import type { Notification } from "@/lib/types";
 
 type Props = {
-  notifications: Notification[];
-  setNotifications: (n: Notification[]) => void;
+  initial: Notification[];
 };
 
-export default function NotificationsTab({ notifications, setNotifications }: Props) {
+export default function NotificationsView({ initial }: Props) {
+  const [notifications, setNotifications] = useState(initial);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
