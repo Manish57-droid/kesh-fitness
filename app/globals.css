@@ -67,4 +67,25 @@ body {
       135deg, rgba(225, 29, 42, 0.06) 0 12px, transparent 12px 24px
     );
   }
+
+  /* Faint tiled dumbbells behind a section. The SVG is only a mask, so the colour
+     follows the theme (--c-fg) and works in both light and dark mode. */
+  .bg-dumbbells {
+    position: relative;
+    isolation: isolate;
+  }
+  .bg-dumbbells::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: rgb(var(--c-fg) / 0.045);
+    -webkit-mask: var(--dumbbell-tile) 0 0 / 140px 140px repeat;
+    mask: var(--dumbbell-tile) 0 0 / 140px 140px repeat;
+  }
+}
+
+:root {
+  --dumbbell-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='black'%3E%3Cg transform='rotate(-30 35 35)'%3E%3Crect x='19' y='33' width='32' height='4' rx='1'/%3E%3Crect x='12' y='24' width='7' height='22' rx='1.5'/%3E%3Crect x='51' y='24' width='7' height='22' rx='1.5'/%3E%3Crect x='7' y='28' width='5' height='14' rx='1'/%3E%3Crect x='58' y='28' width='5' height='14' rx='1'/%3E%3C/g%3E%3Cg transform='translate(74 74) scale(0.8) rotate(25 35 35)'%3E%3Crect x='19' y='33' width='32' height='4' rx='1'/%3E%3Crect x='12' y='24' width='7' height='22' rx='1.5'/%3E%3Crect x='51' y='24' width='7' height='22' rx='1.5'/%3E%3Crect x='7' y='28' width='5' height='14' rx='1'/%3E%3Crect x='58' y='28' width='5' height='14' rx='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }

@@ -35,7 +35,7 @@ const programs = [
 
 export default function Programs() {
   return (
-    <section id="programs" className="section bg-brand-ink">
+    <section id="programs" className="section bg-dumbbells bg-brand-ink">
       <div className="container-x">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>

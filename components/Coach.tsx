@@ -40,8 +40,8 @@ export default function Coach() {
           </figure>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={site.ownerInstagram} target="_blank" rel="noreferrer" className="btn-primary">
-              <Instagram className="h-4 w-4" /> @{site.ownerHandle}
+            <a href={site.instagram} target="_blank" rel="noreferrer" className="btn-primary">
+              <Instagram className="h-4 w-4" /> @{site.instagramHandle}
             </a>
             <a href={site.youtube} target="_blank" rel="noreferrer" className="btn-ghost">
               <Youtube className="h-4 w-4" /> YouTube

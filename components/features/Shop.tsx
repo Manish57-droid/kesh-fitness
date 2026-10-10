@@ -43,7 +43,7 @@ export default function Shop() {
   };
 
   return (
-    <section id="shop" className="section bg-brand-ink">
+    <section id="shop" className="section bg-dumbbells bg-brand-ink">
       <div className="container-x">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -120,6 +120,9 @@ export default function Shop() {
                       <span className="font-display text-2xl leading-none sm:text-3xl">{rupees(p.price)}</span>
                       {off > 0 && <span className="text-xs text-brand-muted line-through">{rupees(p.mrp!)}</span>}
                     </p>
+                    {p.in_stock && p.quantity > 0 && p.quantity <= 3 && (
+                      <p className="mt-1 text-[11px] font-semibold text-amber-500">Hurry, only {p.quantity} left</p>
+                    )}
                     <button
                       onClick={() => order(p)}
                       disabled={!p.in_stock}

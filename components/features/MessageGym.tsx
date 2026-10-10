@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Instagram, Loader2, MessageCircle, Phone, Send } from "lucide-react";
+import DumbbellArt from "../DumbbellArt";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { PREFILL_MESSAGE_EVENT } from "@/lib/events";
@@ -66,7 +67,7 @@ export default function MessageGym() {
   ].filter(Boolean) as { href: string; label: string; Icon: typeof Phone }[];
 
   return (
-    <section id="contact" className="section scroll-mt-16 bg-brand-ink">
+    <section id="contact" className="section bg-dumbbells scroll-mt-16 bg-brand-ink">
       <div className="container-x grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
         <div>
           <p className="eyebrow">Get in Touch</p>
@@ -84,6 +85,7 @@ export default function MessageGym() {
               </a>
             ))}
           </div>
+          <DumbbellArt className="mt-16 hidden w-72 rotate-[16deg] text-brand-red/20 lg:block" />
         </div>
 
         <div>

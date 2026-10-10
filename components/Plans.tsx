@@ -1,11 +1,14 @@
 import { BadgeIndianRupee, Check } from "lucide-react";
+import DumbbellArt from "./DumbbellArt";
 import JoinPlanButton from "./features/JoinPlanButton";
 import { pricing, rupees } from "@/lib/site";
 
 export default function Plans() {
   return (
-    <section id="plans" className="section bg-brand-ink">
-      <div className="container-x">
+    <section id="plans" className="section bg-dumbbells relative overflow-hidden bg-brand-ink">
+      <DumbbellArt className="absolute -left-20 top-1/3 hidden w-80 -rotate-[28deg] text-brand-red/15 xl:block" />
+      <DumbbellArt className="absolute -right-20 bottom-16 hidden w-80 rotate-[22deg] text-brand-red/15 xl:block" />
+      <div className="container-x relative">
         <div className="text-center">
           <p className="eyebrow justify-center">Membership</p>
           <h2 className="heading mt-5">

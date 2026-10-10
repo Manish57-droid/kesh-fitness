@@ -23,7 +23,7 @@ The site and the workout planner work without any setup. The join form, message 
 - Paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click *Run*. It should say "Success. No rows returned".
 - This creates: `profiles` (admin role), `join_requests`, `messages`, `notifications`, `products`, a public `products` storage bucket for product photos, the security rules, and live updates for announcements.
 - Safe to run again whenever the file changes.
-- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (currently `002_members.sql`, which adds Active Members). Each file only contains new changes, so you never need to re-run old ones.
+- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity). Each file only contains new changes, so you never need to re-run old ones.
 
 **3. Connect the website**
 - Left sidebar → *Project Settings* → *API* (or *API Keys*).

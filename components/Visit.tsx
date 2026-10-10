@@ -6,7 +6,7 @@ export default function Visit() {
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.mapQuery)}`;
 
   return (
-    <section id="visit" className="section bg-brand-ink">
+    <section id="visit" className="section bg-dumbbells bg-brand-ink">
       <div className="container-x">
         <p className="eyebrow">Find Us</p>
         <h2 className="heading mt-5">

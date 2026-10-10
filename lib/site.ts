@@ -14,8 +14,6 @@ export const site = {
   instagram: "https://www.instagram.com/teaminvinciblekesh/",
   instagramHandle: "teaminvinciblekesh",
   instagramDM: "https://ig.me/m/teaminvinciblekesh",
-  ownerInstagram: "https://www.instagram.com/fit_kesh_official/",
-  ownerHandle: "fit_kesh_official",
   youtube: "https://youtube.com/channel/UCvp9plbiQ0P2nbGCDHeLPqQ",
 
   // TODO: confirm real gym timings.

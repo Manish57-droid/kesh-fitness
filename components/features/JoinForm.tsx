@@ -4,6 +4,7 @@ import { CheckCircle2, ClipboardList, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { pricing, rupees, site, type PlanId } from "@/lib/site";
+import DumbbellArt from "../DumbbellArt";
 import { PLAN_EVENT } from "@/lib/events";
 
 const goals = ["Muscle gain", "Fat loss", "Strength", "General fitness", "Competition prep"];
@@ -90,6 +91,7 @@ export default function JoinForm() {
               <span className="font-semibold">{rupees(pricing.joiningFee)}</span>
             </p>
           </div>
+          <DumbbellArt className="mt-16 hidden w-72 -rotate-[18deg] text-brand-red/20 lg:block" />
         </div>
 
         {done ? (
