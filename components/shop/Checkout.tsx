@@ -44,11 +44,11 @@ export default function Checkout() {
     return <div className="mx-auto h-96 max-w-4xl animate-pulse bg-brand-card" />;
   }
 
-  if (!product || !product.in_stock || product.quantity < 1) {
+  if (!product) {
     return (
       <div className="card mx-auto max-w-md text-center">
         <p className="font-display text-3xl tracking-wide">
-          {product ? "Out of stock" : "Product not found"}
+          Product not found
         </p>
         <p className="mt-2 text-sm text-fg/70">This product isn&apos;t available right now.</p>
         <Link href="/shop" className="btn-primary mt-6">
@@ -58,7 +58,7 @@ export default function Checkout() {
     );
   }
 
-  const max = Math.min(product.quantity, MAX_PER_ORDER);
+  const max = MAX_PER_ORDER;
   const subtotal = product.price * qty;
   const total = subtotal + payment.serviceCharge;
 
@@ -80,7 +80,7 @@ export default function Checkout() {
 
     if (error || !data) {
       setBusy(false);
-      // place_order's own errors are written for customers (e.g. "only 2 left");
+      // place_order's own errors are written for customers (e.g. "Please enter your name.");
       // PGRST202 means the ordering functions aren't installed yet.
       return setError(
         error?.code === "PGRST202"
@@ -139,7 +139,7 @@ export default function Checkout() {
           <div className="flex flex-wrap items-center gap-4">
             <QuantityStepper value={qty} max={max} onChange={setQty} />
             <span className="text-xs text-brand-muted">
-              {product.quantity <= 5 ? `Only ${product.quantity} left` : `Max ${max} per order`}
+              Max {max} per order
             </span>
           </div>
         </div>

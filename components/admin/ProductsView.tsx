@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { Check, Eye, EyeOff, Minus, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Eye, EyeOff, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Photo from "../Photo";
 import ProductForm, { storagePath } from "./ProductForm";
 import { createClient } from "@/lib/supabase/client";
@@ -25,8 +25,7 @@ export default function ProductsView({ initial }: Props) {
   const shown = products.filter(
     (p) => !q || p.name.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
   );
-  const totalUnits = products.reduce((n, p) => n + (p.quantity ?? 0), 0);
-  const lowStock = products.filter((p) => p.is_active && (p.quantity ?? 0) <= 2).length;
+  const visible = products.filter((p) => p.is_active).length;
 
   /** Optimistic update; rolls back that product if the save fails. */
   const patch = async (id: number, changes: Partial<Product>) => {
@@ -36,11 +35,7 @@ export default function ProductsView({ initial }: Props) {
     const { error } = await createClient().from("products").update(changes).eq("id", id);
     if (error) {
       if (before) setProducts((list) => list.map((x) => (x.id === id ? before : x)));
-      setError(
-        error.message.includes("quantity")
-          ? "Stock quantity needs supabase/migrations/003_product_quantity.sql. Run it in the SQL Editor."
-          : error.message
-      );
+      setError(error.message);
     }
   };
 
@@ -68,11 +63,11 @@ export default function ProductsView({ initial }: Props) {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "Products", value: products.length },
-          { label: "Units in stock", value: totalUnits },
-          { label: "Low / out of stock", value: lowStock, red: lowStock > 0 },
+          { label: "On website", value: visible },
+          { label: "Hidden", value: products.length - visible },
         ].map((s) => (
           <div key={s.label} className="card p-4">
-            <p className={`font-display text-4xl leading-none ${s.red ? "text-brand-red" : ""}`}>{s.value}</p>
+            <p className="font-display text-4xl leading-none">{s.value}</p>
             <p className="mt-1 text-[11px] uppercase tracking-wider text-brand-muted">{s.label}</p>
           </div>
         ))}
@@ -87,7 +82,7 @@ export default function ProductsView({ initial }: Props) {
           <Plus className="h-4 w-4" /> Add Product
         </button>
       </div>
-      <p className="mt-3 text-xs text-brand-muted">Tip: tap a price to change it. Use − / + to update stock.</p>
+      <p className="mt-3 text-xs text-brand-muted">Tip: tap a price to change it. Use the eye icon to hide a product from the website.</p>
       {error && <p className="mt-3 text-sm text-brand-red">{error}</p>}
 
       {shown.length === 0 ? (
@@ -133,33 +128,6 @@ type RowProps = {
 function ProductRow({ product: p, onPatch, onEdit, onDelete }: RowProps) {
   const [editingPrice, setEditingPrice] = useState(false);
   const [price, setPrice] = useState(String(p.price));
-  // Quantity changes show instantly and are saved once the taps stop.
-  const [qty, setQty] = useState(p.quantity ?? 0);
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
-  const pending = useRef<(() => void) | null>(null);
-
-  useEffect(() => setQty(p.quantity ?? 0), [p.quantity]);
-  // Save any change still waiting if the admin leaves the page.
-  useEffect(
-    () => () => {
-      clearTimeout(saveTimer.current);
-      pending.current?.();
-    },
-    []
-  );
-
-  const changeQty = (delta: number) => {
-    const next = Math.max(0, qty + delta);
-    if (next === qty) return;
-    setQty(next);
-    clearTimeout(saveTimer.current);
-    pending.current = () => {
-      pending.current = null;
-      onPatch({ quantity: next, in_stock: next > 0 });
-    };
-    saveTimer.current = setTimeout(() => pending.current?.(), 600);
-  };
-
   const savePrice = () => {
     const value = Math.round(Number(price));
     if (!Number.isFinite(value) || value < 0) return;
@@ -220,37 +188,6 @@ function ProductRow({ product: p, onPatch, onEdit, onDelete }: RowProps) {
       </div>
 
       <div className="flex items-center justify-between gap-3 sm:justify-end">
-        {/* Stock stepper */}
-        <div className="flex flex-col items-start gap-1 sm:items-center">
-          <div className="flex items-center border border-brand-line">
-            <button
-              onClick={() => changeQty(-1)}
-              disabled={qty === 0}
-              className="flex h-10 w-10 items-center justify-center text-fg transition hover:bg-fg/5 disabled:opacity-30"
-              aria-label={`Decrease stock of ${p.name}`}
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-            <span className="w-12 text-center font-display text-xl" aria-live="polite">
-              {qty}
-            </span>
-            <button
-              onClick={() => changeQty(1)}
-              className="flex h-10 w-10 items-center justify-center text-fg transition hover:bg-fg/5"
-              aria-label={`Increase stock of ${p.name}`}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wider ${
-              qty === 0 ? "text-brand-red" : qty <= 2 ? "text-amber-500" : "text-emerald-500"
-            }`}
-          >
-            {qty === 0 ? "Out of stock" : qty <= 2 ? "Low stock" : "In stock"}
-          </span>
-        </div>
-
         <div className="flex">
           <button
             onClick={() => onPatch({ is_active: !p.is_active })}
@@ -269,7 +206,7 @@ function ProductRow({ product: p, onPatch, onEdit, onDelete }: RowProps) {
         </div>
       </div>
       {!p.is_active && (
-        <span className="self-start bg-amber-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-black sm:hidden">Hidden</span>
+        <span className="self-start bg-amber-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-black">Hidden</span>
       )}
     </li>
   );

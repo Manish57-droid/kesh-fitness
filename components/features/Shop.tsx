@@ -109,16 +109,11 @@ function ProductCard({ product: p }: { product: Product }) {
         <Photo
           src={p.image_url ?? ""}
           alt={p.name}
-          className={`aspect-square w-full bg-white ${p.in_stock ? "" : "opacity-50 grayscale"}`}
+          className="aspect-square w-full bg-white"
         />
         {off > 0 && (
           <span className="absolute left-2 top-2 bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
             {off}% off
-          </span>
-        )}
-        {!p.in_stock && (
-          <span className="absolute inset-x-0 bottom-0 bg-black/75 py-1.5 text-center text-[11px] font-bold uppercase tracking-widest text-white">
-            Out of stock
           </span>
         )}
       </div>
@@ -130,18 +125,9 @@ function ProductCard({ product: p }: { product: Product }) {
           <span className="font-display text-2xl leading-none sm:text-3xl">{rupees(p.price)}</span>
           {off > 0 && <span className="text-xs text-brand-muted line-through">{rupees(p.mrp!)}</span>}
         </p>
-        {p.in_stock && p.quantity > 0 && p.quantity <= 3 && (
-          <p className="mt-1 text-[11px] font-semibold text-amber-500">Hurry, only {p.quantity} left</p>
-        )}
-        {p.in_stock ? (
-          <Link href={`/shop/checkout?product=${p.id}`} className="btn-primary btn-sm mt-3 w-full">
+        <Link href={`/shop/checkout?product=${p.id}`} className="btn-primary btn-sm mt-3 w-full">
             <ShoppingCart className="h-3.5 w-3.5" /> Order Now
           </Link>
-        ) : (
-          <span className="btn-sm mt-3 w-full cursor-not-allowed border border-brand-line text-center text-brand-muted">
-            Unavailable
-          </span>
-        )}
       </div>
     </li>
   );

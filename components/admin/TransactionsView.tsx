@@ -74,7 +74,7 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
   );
 
   const setStatus = async (o: Order, status: "paid" | "cancelled") => {
-    if (status === "cancelled" && !confirm(`Cancel ${o.receipt_no}? The stock (${o.quantity}) goes back to the product.`)) return;
+    if (status === "cancelled" && !confirm(`Cancel ${o.receipt_no}?`)) return;
     if (status === "paid" && o.payment_method === "upi" && !confirm(`Did you receive ${rupees(o.total)} with UTR ${o.utr ?? "(none)"} in Paytm?`)) return;
     setBusyId(o.id);
     setError("");

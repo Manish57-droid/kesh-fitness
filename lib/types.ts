@@ -70,8 +70,6 @@ export type Product = {
   price: number;
   mrp: number | null;
   image_url: string | null;
-  in_stock: boolean;
-  quantity: number; // units in stock (migration 003)
   is_active: boolean;
   sort_order: number;
   created_at: string;

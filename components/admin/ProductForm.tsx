@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Minus, Plus, X } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { resizeImage } from "@/lib/image";
 import type { Product } from "@/lib/types";
@@ -25,7 +25,6 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
     mrp: product?.mrp?.toString() ?? "",
     description: product?.description ?? "",
     sort_order: product?.sort_order?.toString() ?? "0",
-    quantity: (product?.quantity ?? 1).toString(),
     is_active: product?.is_active ?? true,
   });
   const [file, setFile] = useState<File | null>(null);
@@ -86,8 +85,6 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
       mrp,
       description: form.description.trim() || null,
       sort_order: Number(form.sort_order) || 0,
-      quantity: Math.max(0, Math.round(Number(form.quantity) || 0)),
-      in_stock: Number(form.quantity) > 0,
       is_active: form.is_active,
       image_url,
     };
@@ -97,13 +94,7 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
       : supabase.from("products").insert(row);
     const { data, error } = await query.select().single();
     setBusy(false);
-    if (error) {
-      return setError(
-        error.message.includes("quantity")
-          ? "Stock quantity needs supabase/migrations/003_product_quantity.sql. Run it in the SQL Editor."
-          : error.message
-      );
-    }
+    if (error) return setError(error.message);
 
     // Clean up the old photo once the new one is saved.
     const oldPath = storagePath(product?.image_url ?? null);
@@ -215,46 +206,13 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
             <textarea id="p-desc" rows={3} className="input resize-y" value={form.description} onChange={set("description")} maxLength={300} placeholder="Flavour, size, servings…" />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="p-qty" className="label">Stock quantity</label>
-              <div className="flex items-center border border-brand-line">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, quantity: String(Math.max(0, Number(form.quantity) - 1)) })}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center hover:bg-fg/5"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <input
-                  id="p-qty"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  className="w-full border-x border-brand-line bg-brand-black py-2.5 text-center text-base outline-none sm:text-sm"
-                  value={form.quantity}
-                  onChange={set("quantity")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, quantity: String(Number(form.quantity) + 1) })}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center hover:bg-fg/5"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-brand-muted">0 shows “Out of stock” on the website.</p>
-            </div>
-            <label className="flex cursor-pointer items-start gap-3 self-start border border-brand-line p-3 sm:mt-6">
-              <input type="checkbox" checked={form.is_active} onChange={set("is_active")} className="mt-0.5 h-5 w-5 accent-[#E11D2A]" />
-              <span>
-                <span className="block text-sm font-semibold">Show on website</span>
-                <span className="block text-xs text-brand-muted">Uncheck to hide it</span>
-              </span>
-            </label>
-          </div>
+          <label className="flex cursor-pointer items-start gap-3 border border-brand-line p-3">
+            <input type="checkbox" checked={form.is_active} onChange={set("is_active")} className="mt-0.5 h-5 w-5 accent-[#E11D2A]" />
+            <span>
+              <span className="block text-sm font-semibold">Show on website</span>
+              <span className="block text-xs text-brand-muted">Uncheck to hide it from the shop</span>
+            </span>
+          </label>
 
           {error && <p className="text-sm text-brand-red">{error}</p>}
         </div>
