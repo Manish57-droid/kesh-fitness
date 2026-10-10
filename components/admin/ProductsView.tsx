@@ -82,7 +82,7 @@ export default function ProductsView({ initial }: Props) {
           <Plus className="h-4 w-4" /> Add Product
         </button>
       </div>
-      <p className="mt-3 text-xs text-brand-muted">Tip: tap a price to change it. Use the eye icon to hide a product from the website.</p>
+      <p className="mt-3 text-xs text-brand-muted">Products are numbered in the order they appear in the shop (change it with “Display order” when editing). Tap a price to change it; use the eye icon to hide a product.</p>
       {error && <p className="mt-3 text-sm text-brand-red">{error}</p>}
 
       {shown.length === 0 ? (
@@ -97,6 +97,7 @@ export default function ProductsView({ initial }: Props) {
           {shown.map((p) => (
             <ProductRow
               key={p.id}
+              number={products.indexOf(p) + 1}
               product={p}
               onPatch={(changes) => patch(p.id, changes)}
               onEdit={() => setEditing(p)}
@@ -119,13 +120,14 @@ export default function ProductsView({ initial }: Props) {
 }
 
 type RowProps = {
+  number: number;
   product: Product;
   onPatch: (changes: Partial<Product>) => void;
   onEdit: () => void;
   onDelete: () => void;
 };
 
-function ProductRow({ product: p, onPatch, onEdit, onDelete }: RowProps) {
+function ProductRow({ number, product: p, onPatch, onEdit, onDelete }: RowProps) {
   const [editingPrice, setEditingPrice] = useState(false);
   const [price, setPrice] = useState(String(p.price));
   const savePrice = () => {
@@ -143,6 +145,9 @@ function ProductRow({ product: p, onPatch, onEdit, onDelete }: RowProps) {
   return (
     <li className={`flex flex-col gap-3 bg-brand-card p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4 ${p.is_active ? "" : "opacity-60"}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+        <span className="w-8 shrink-0 text-center font-display text-2xl text-brand-red" aria-label={`Product ${number}`}>
+          {number}
+        </span>
         <Photo src={p.image_url ?? ""} alt={p.name} className="h-16 w-16 shrink-0 bg-white sm:h-20 sm:w-20" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{p.name}</p>

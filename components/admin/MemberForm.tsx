@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { todayISO } from "@/lib/format";
+import { addMonths, todayISO } from "@/lib/format";
 import type { PlanContent } from "@/lib/content";
 import type { JoinRequest, Member } from "@/lib/types";
 
@@ -25,7 +25,8 @@ export default function MemberForm({ member, fromRequest, onClose, onSaved, plan
     gender: src?.gender ?? "",
     plan: src?.plan ?? "",
     joined_on: member?.joined_on ?? todayISO(),
-    paid_until: member?.paid_until ?? "",
+    // New members: one month paid from today.
+    paid_until: member ? member.paid_until ?? "" : addMonths(todayISO(), 1),
     emergency_contact: member?.emergency_contact ?? "",
     notes: member?.notes ?? fromRequest?.notes ?? "",
     is_active: member?.is_active ?? true,
@@ -132,7 +133,19 @@ export default function MemberForm({ member, fromRequest, onClose, onSaved, plan
             </div>
             <div>
               <label htmlFor="m-joined" className="label">Joined on</label>
-              <input id="m-joined" type="date" className="input" value={form.joined_on} onChange={set("joined_on")} />
+              <input
+                id="m-joined"
+                type="date"
+                className="input"
+                value={form.joined_on}
+                onChange={(e) => {
+                  const joined = e.target.value;
+                  // Keep "paid until" one month after joining unless it was changed by hand.
+                  const followsJoin = !form.paid_until || form.paid_until === addMonths(form.joined_on, 1);
+                  setForm({ ...form, joined_on: joined, paid_until: followsJoin && joined ? addMonths(joined, 1) : form.paid_until });
+                }}
+              />
+              <p className="mt-1 text-xs text-brand-muted">Filled with today's date automatically.</p>
             </div>
             <div>
               <label htmlFor="m-paid" className="label">Fees paid until</label>

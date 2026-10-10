@@ -4,7 +4,7 @@ import { CheckCircle2, ExternalLink, Loader2, RotateCcw, Save } from "lucide-rea
 import { Area, ImageField, Lines, List, Num, Text, Toggle } from "./fields";
 import ProgramIcon from "../../ProgramIcon";
 import { createClient } from "@/lib/supabase/client";
-import { PROGRAM_ICONS, defaultContent, type ProgramIcon as IconName, type SiteContent } from "@/lib/content";
+import { PROGRAM_ICONS, defaultContent, parsePin, type ProgramIcon as IconName, type SiteContent } from "@/lib/content";
 
 const SECTIONS = [
   { id: "gym", label: "Gym details & timings" },
@@ -116,7 +116,16 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
                 <Text label="Team name" value={g.team} onChange={(v) => patch("gym", { team: v })} />
                 <Text label="Tagline" value={g.tagline} onChange={(v) => patch("gym", { tagline: v })} />
                 <Text label="Address" value={g.address} onChange={(v) => patch("gym", { address: v })} />
-                <Text label="Map search" value={g.mapQuery} onChange={(v) => patch("gym", { mapQuery: v })} hint="What Google Maps should search for to find the gym." />
+                <Text label="Google Maps link" value={g.mapUrl} onChange={(v) => patch("gym", { mapUrl: v.trim() })} maxLength={300} placeholder="https://maps.app.goo.gl/…" hint="Used for the Get Directions button. In Google Maps tap Share → Copy link." />
+                <Text
+                  label="Map pin (latitude, longitude)"
+                  value={g.mapPin}
+                  onChange={(v) => patch("gym", { mapPin: v })}
+                  placeholder="23.3456, 85.8312"
+                  maxLength={40}
+                  hint={g.mapPin && !parsePin(g.mapPin) ? "Format: latitude, longitude (e.g. 23.3456, 85.8312)" : "Exact pin on the website map. In Google Maps, long-press the gym and copy the numbers shown."}
+                />
+                <Text label="Map search (if no pin)" value={g.mapQuery} onChange={(v) => patch("gym", { mapQuery: v })} hint="Used for the map only when the pin above is empty." />
                 <Text label="Phone" value={g.phone} onChange={(v) => patch("gym", { phone: v })} placeholder="+91 98765 43210" hint="Leave empty to hide." />
                 <Text label="Trainer email" value={g.email} onChange={(v) => patch("gym", { email: v.trim() })} placeholder="name@gmail.com" maxLength={100} hint="Used for online coaching enquiries and contact. Leave empty to hide." />
                 <Text label="WhatsApp number" value={g.whatsapp} onChange={(v) => patch("gym", { whatsapp: v.replace(/\D/g, "") })} placeholder="919876543210" hint="Digits with country code. Leave empty to hide." />

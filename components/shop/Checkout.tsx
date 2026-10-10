@@ -10,6 +10,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
 import { MOBILE_ERROR, normalizeMobile } from "@/lib/validate";
 import PriceNotice from "./PriceNotice";
+import { useNow } from "@/lib/useNow";
+import { formatIST } from "@/lib/format";
 import { payment, rupees } from "@/lib/site";
 import type { PaymentMethod, Product } from "@/lib/types";
 
@@ -28,6 +30,7 @@ export default function Checkout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ name: "", phone: "" });
+  const now = useNow();
 
   useEffect(() => {
     const saved = readJSON<{ name?: string; phone?: string }>(KEYS.customer, {});
@@ -216,6 +219,10 @@ export default function Checkout() {
             <PriceNotice compact />
           </div>
           <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex justify-between gap-4 text-xs">
+              <dt className="text-brand-muted">Order date</dt>
+              <dd className="text-right">{now ? formatIST(now.toISOString()) : "…"}</dd>
+            </div>
             <div className="flex justify-between gap-4">
               <dt className="text-fg/70">
                 {rupees(product.price)} × {qty}

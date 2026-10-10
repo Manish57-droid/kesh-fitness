@@ -1,9 +1,8 @@
 import { Clock, Instagram, Mail, MapPin, Phone } from "lucide-react";
-import { instagramUrl, type GymDetails } from "@/lib/content";
+import { instagramUrl, mapLinks, type GymDetails } from "@/lib/content";
 
 export default function Visit({ gym }: { gym: GymDetails }) {
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(gym.mapQuery)}&z=15&output=embed`;
-  const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(gym.mapQuery)}`;
+  const { embed: mapSrc, directions } = mapLinks(gym);
 
   return (
     <section id="visit" className="section bg-dumbbells bg-brand-ink">

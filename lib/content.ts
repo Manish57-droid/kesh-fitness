@@ -19,7 +19,9 @@ export type GymDetails = {
   team: string;
   tagline: string;
   address: string;
-  mapQuery: string;
+  mapQuery: string; // fallback search for the embedded map
+  mapUrl: string; // exact Google Maps link (used for directions)
+  mapPin: string; // "latitude, longitude" for an exact pin on the embedded map; empty = use mapQuery
   phone: string; // empty = hidden
   email: string; // trainer's email; empty = hidden
   whatsapp: string; // digits with country code, e.g. 919876543210; empty = hidden
@@ -77,6 +79,8 @@ export const defaultContent: SiteContent = {
     tagline: "Unisex Multi Gym",
     address: "Near Silli Stadium, Silli, Jharkhand",
     mapQuery: "Silli Stadium, Silli, Jharkhand",
+    mapUrl: "https://maps.app.goo.gl/BuRh5keiP1Sy7uS87",
+    mapPin: "",
     phone: "",
     email: "fitkesh16@gmail.com",
     whatsapp: "",
@@ -210,3 +214,22 @@ export const instagramDM = (g: GymDetails) => `https://ig.me/m/${g.instagramHand
 
 /** Cache tag for the saved content; the admin save calls revalidateTag with it. */
 export const CONTENT_TAG = "site-content";
+
+/** Valid "lat, lng" pin, or null. */
+export function parsePin(pin: string): { lat: number; lng: number } | null {
+  const m = pin.trim().match(/^(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? { lat, lng } : null;
+}
+
+/** Embedded map + directions link for the gym. */
+export function mapLinks(g: GymDetails) {
+  const pin = parsePin(g.mapPin);
+  const where = pin ? `${pin.lat},${pin.lng}` : g.mapQuery;
+  return {
+    embed: `https://maps.google.com/maps?q=${encodeURIComponent(where)}&z=${pin ? 17 : 15}&output=embed`,
+    directions: g.mapUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(where)}`,
+  };
+}

@@ -8,6 +8,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { PLAN_EVENT } from "@/lib/events";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
 import { MOBILE_ERROR, normalizeMobile } from "@/lib/validate";
+import { useNow } from "@/lib/useNow";
+import { formatIST } from "@/lib/format";
 import { rupees, type PlanId } from "@/lib/site";
 import type { SiteContent } from "@/lib/content";
 import type { PaymentMethod } from "@/lib/types";
@@ -39,6 +41,7 @@ export default function JoinForm({ plans, gymName }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [phoneError, setPhoneError] = useState("");
+  const now = useNow();
 
   // "Join with …" buttons in the Plans section pre-select a plan.
   useEffect(() => {
@@ -248,6 +251,10 @@ export default function JoinForm({ plans, gymName }: Props) {
           </div>
 
           <div className="space-y-2 border border-brand-line bg-brand-black/40 p-4 text-sm">
+            <p className="flex justify-between gap-4 text-xs">
+              <span className="text-brand-muted">Admission date</span>
+              <span className="text-right">{now ? formatIST(now.toISOString()) : "…"}</span>
+            </p>
             <p className="flex justify-between gap-4">
               <span className="text-fg/70">{plan.name} · first month</span>
               <span>{rupees(plan.monthly)}</span>

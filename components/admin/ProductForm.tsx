@@ -6,6 +6,8 @@ import { resizeImage } from "@/lib/image";
 import type { Product } from "@/lib/types";
 
 const BUCKET = "products";
+const NEW_CATEGORY = "__new__";
+const SUGGESTED_CATEGORIES = ["Protein", "Pre-workout", "Creatine", "Vitamins", "Accessories", "Apparel"];
 
 /** Storage path from a public URL like …/storage/v1/object/public/products/<path>. */
 export const storagePath = (url: string | null) => url?.split(`/object/public/${BUCKET}/`)[1] ?? null;
@@ -33,6 +35,11 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+  const [newCategory, setNewCategory] = useState(false);
+  // Categories already used by products, plus a few common ones (and this product's own).
+  const categoryOptions = Array.from(
+    new Set([...categories, ...SUGGESTED_CATEGORIES, ...(product?.category ? [product.category] : [])])
+  ).sort((a, b) => a.localeCompare(b));
 
   // Lock background scroll while the form is open.
   useEffect(() => {
@@ -188,12 +195,47 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="p-cat" className="label">Category</label>
-              <input id="p-cat" list="p-cat-list" className="input" value={form.category} onChange={set("category")} maxLength={40} placeholder="e.g. Protein" />
-              <datalist id="p-cat-list">
-                {Array.from(new Set(["Protein", "Pre-workout", "Vitamins", "Accessories", "Apparel", ...categories])).map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
+              {newCategory ? (
+                <div className="flex gap-2">
+                  <input
+                    id="p-cat"
+                    className="input"
+                    value={form.category}
+                    onChange={set("category")}
+                    maxLength={40}
+                    placeholder="New category name"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewCategory(false);
+                      setForm({ ...form, category: product?.category ?? "" });
+                    }}
+                    className="btn-ghost btn-sm shrink-0"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <select
+                  id="p-cat"
+                  className="input"
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === NEW_CATEGORY) {
+                      setNewCategory(true);
+                      setForm({ ...form, category: "" });
+                    } else setForm({ ...form, category: e.target.value });
+                  }}
+                >
+                  <option value="">No category</option>
+                  {categoryOptions.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value={NEW_CATEGORY}>+ Add new category…</option>
+                </select>
+              )}
             </div>
             <div>
               <label htmlFor="p-sort" className="label">Display order</label>

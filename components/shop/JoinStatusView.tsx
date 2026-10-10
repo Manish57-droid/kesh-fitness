@@ -5,7 +5,7 @@ import { ArrowLeft, Banknote, Clock, PartyPopper, Printer, XCircle } from "lucid
 import PaymentPanel from "./PaymentPanel";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { formatIST, rupeesInWords } from "@/lib/format";
+import { addMonths, formatDay, formatIST, rupeesInWords } from "@/lib/format";
 import { payment, rupees } from "@/lib/site";
 import type { GymDetails, PlanContent } from "@/lib/content";
 import type { PublicJoinRequest } from "@/lib/types";
@@ -55,6 +55,8 @@ export default function JoinStatusView({ token, gym, plans }: Props) {
   const monthlyFee = req.monthly_fee ?? amount - joiningFee;
   const firstName = req.name.split(" ")[0];
   const isPaid = req.payment_status === "paid";
+  // Membership runs one month from the day payment was confirmed (India time), same as Active Members.
+  const startDay = req.paid_at ? new Date(req.paid_at).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) : null;
 
   const stamp = {
     paid: { label: "PAID", cls: "border-emerald-600 text-emerald-600" },
@@ -123,6 +125,12 @@ export default function JoinStatusView({ token, gym, plans }: Props) {
               <p className="mt-1 font-semibold">{req.payment_method === "upi" ? "UPI (online)" : "Cash at gym"}</p>
               {req.utr && <p className="text-fg/70">UTR: <span className="font-mono">{req.utr}</span></p>}
               {req.paid_at && <p className="text-fg/70">Paid on {formatIST(req.paid_at)}</p>}
+              {startDay && (
+                <>
+                  <p className="text-fg/70">Member since {formatDay(startDay)}</p>
+                  <p className="text-fg/70">Fees paid till {formatDay(addMonths(startDay, 1))}</p>
+                </>
+              )}
             </div>
           </section>
 
