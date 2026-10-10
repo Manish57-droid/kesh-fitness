@@ -8,6 +8,8 @@ import QuantityStepper from "./QuantityStepper";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
+import { MOBILE_ERROR, normalizeMobile } from "@/lib/validate";
+import PriceNotice from "./PriceNotice";
 import { payment, rupees } from "@/lib/site";
 import type { PaymentMethod, Product } from "@/lib/types";
 
@@ -25,6 +27,7 @@ export default function Checkout() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ name: "", phone: "" });
 
   useEffect(() => {
     const saved = readJSON<{ name?: string; phone?: string }>(KEYS.customer, {});
@@ -64,9 +67,14 @@ export default function Checkout() {
 
   const placeOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Name and a valid mobile number are mandatory for every purchase.
+    const cleanPhone = normalizeMobile(phone);
+    const errors = { name: name.trim() ? "" : "Please enter your name.", phone: cleanPhone ? "" : MOBILE_ERROR };
+    setFieldErrors(errors);
+    if (errors.name || errors.phone) return;
     setBusy(true);
     setError("");
-    writeJSON(KEYS.customer, { name: name.trim(), phone: phone.trim() });
+    writeJSON(KEYS.customer, { name: name.trim(), phone: cleanPhone });
 
     const { data, error } = await createClient()
       .rpc("place_order", {
@@ -74,7 +82,7 @@ export default function Checkout() {
         p_quantity: qty,
         p_method: method,
         p_name: name,
-        p_phone: phone,
+        p_phone: cleanPhone,
       })
       .single<{ receipt_no: string; token: string }>();
 
@@ -145,27 +153,49 @@ export default function Checkout() {
         </div>
 
         {/* Customer */}
-        <div className="card grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-          <div>
-            <label htmlFor="c-name" className="label">Your name *</label>
-            <input id="c-name" className="input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} autoComplete="name" />
+        <div className="card p-4 sm:p-5">
+          <p className="label">Your details (required)</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="c-name" className="label">Full name *</label>
+              <input
+                id="c-name"
+                className="input"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setFieldErrors((f) => ({ ...f, name: "" }));
+                }}
+                required
+                maxLength={60}
+                autoComplete="name"
+                aria-invalid={!!fieldErrors.name}
+              />
+              {fieldErrors.name && <p className="mt-1 text-xs text-brand-red">{fieldErrors.name}</p>}
+            </div>
+            <div>
+              <label htmlFor="c-phone" className="label">Mobile number *</label>
+              <input
+                id="c-phone"
+                type="tel"
+                inputMode="tel"
+                className="input"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setFieldErrors((f) => ({ ...f, phone: "" }));
+                }}
+                onBlur={() => phone && setFieldErrors((f) => ({ ...f, phone: normalizeMobile(phone) ? "" : MOBILE_ERROR }))}
+                required
+                maxLength={16}
+                autoComplete="tel"
+                placeholder="10-digit mobile"
+                aria-invalid={!!fieldErrors.phone}
+              />
+              {fieldErrors.phone && <p className="mt-1 text-xs text-brand-red">{fieldErrors.phone}</p>}
+            </div>
           </div>
-          <div>
-            <label htmlFor="c-phone" className="label">Phone *</label>
-            <input
-              id="c-phone"
-              type="tel"
-              inputMode="tel"
-              className="input"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              pattern="[0-9+\s\-]{10,15}"
-              title="Enter a valid phone number"
-              maxLength={15}
-              autoComplete="tel"
-            />
-          </div>
+          <p className="mt-3 text-xs text-brand-muted">Shown on your receipt. We use it to contact you about your order.</p>
         </div>
 
         {/* Payment method */}
@@ -182,6 +212,9 @@ export default function Checkout() {
       <div className="lg:sticky lg:top-28 lg:self-start">
         <div className="card p-4 sm:p-6">
           <p className="font-display text-2xl tracking-wide">Order Summary</p>
+          <div className="mt-3">
+            <PriceNotice compact />
+          </div>
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-fg/70">

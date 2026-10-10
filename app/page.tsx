@@ -31,8 +31,8 @@ export default async function Home() {
         <Programs c={c.programs} />
         <WorkoutPlanner />
         <Coach c={c.coach} gym={c.gym} />
-        <Plans c={c.plans} />
-        <JoinForm plans={c.plans} gymName={c.gym.name} team={c.gym.team} />
+        <Plans c={c.plans} email={c.gym.email} />
+        <JoinForm plans={c.plans} gymName={c.gym.name} />
         <Shop preview />
         <Gallery instagramHandle={c.gym.instagramHandle} />
         <MessageGym gym={c.gym} />

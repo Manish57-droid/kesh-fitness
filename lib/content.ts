@@ -7,7 +7,7 @@ export const PROGRAM_ICONS = [
 export type ProgramIcon = (typeof PROGRAM_ICONS)[number];
 
 export type PlanContent = {
-  id: "gym" | "cardio"; // fixed: join requests and members refer to these ids
+  id: "gym" | "cardio" | "personal"; // fixed: join requests and members refer to these ids
   name: string;
   monthly: number;
   perks: string[];
@@ -21,6 +21,7 @@ export type GymDetails = {
   address: string;
   mapQuery: string;
   phone: string; // empty = hidden
+  email: string; // trainer's email; empty = hidden
   whatsapp: string; // digits with country code, e.g. 919876543210; empty = hidden
   instagramHandle: string;
   youtube: string;
@@ -56,7 +57,16 @@ export type SiteContent = {
     transformationImage: string;
     showTransformation: boolean;
   };
-  plans: { eyebrow: string; title: string; highlight: string; subtitle: string; joiningFee: number; items: PlanContent[] };
+  plans: {
+    eyebrow: string;
+    title: string;
+    highlight: string;
+    subtitle: string;
+    joiningFee: number;
+    items: PlanContent[];
+    /** Online coaching (not a gym membership); visitors email the trainer. */
+    online: { enabled: boolean; title: string; price: number; duration: string; text: string; perks: string[] };
+  };
   joinCta: { line1: string; line2: string; text: string; button: string };
 };
 
@@ -68,6 +78,7 @@ export const defaultContent: SiteContent = {
     address: "Near Silli Stadium, Silli, Jharkhand",
     mapQuery: "Silli Stadium, Silli, Jharkhand",
     phone: "",
+    email: "fitkesh16@gmail.com",
     whatsapp: "",
     instagramHandle: "teaminvinciblekesh",
     youtube: "https://youtube.com/channel/UCvp9plbiQ0P2nbGCDHeLPqQ",
@@ -149,7 +160,22 @@ export const defaultContent: SiteContent = {
         perks: ["Everything in the Gym plan", "Treadmill & cardio machines", "Fat-loss friendly routines"],
         featured: true,
       },
+      {
+        id: "personal",
+        name: "Personal Training",
+        monthly: 4000,
+        perks: ["Everything in Gym + Cardio", "One-on-one training with Kesh", "Custom workout & diet plan", "Weekly progress check-ins"],
+        featured: false,
+      },
     ],
+    online: {
+      enabled: true,
+      title: "Online Competition Prep",
+      price: 15000,
+      duration: "3 months",
+      text: "Preparing for a bodybuilding or physique competition? Train online with Kesh from anywhere. Email for details and availability.",
+      perks: ["Personalised training & diet plan", "Posing and peak-week guidance", "Regular check-ins with Kesh", "For competition athletes only"],
+    },
   },
   joinCta: {
     line1: "Your First Workout",

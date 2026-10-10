@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag, ShoppingCart } from "lucide-react";
 import Photo from "../Photo";
+import PriceNotice from "../shop/PriceNotice";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { rupees } from "@/lib/site";
@@ -51,6 +52,10 @@ export default function Shop({ preview = false }: { preview?: boolean }) {
           <p className="max-w-md text-sm text-fg/60">
             Supplements and gear from the gym. Order online, pay by UPI or cash, and collect it at the counter.
           </p>
+        </div>
+
+        <div className="mt-6">
+          <PriceNotice compact={preview} />
         </div>
 
         {!preview && categories.length > 2 && (

@@ -1,4 +1,4 @@
-import { Clock, Instagram, MapPin, Phone } from "lucide-react";
+import { Clock, Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { instagramUrl, type GymDetails } from "@/lib/content";
 
 export default function Visit({ gym }: { gym: GymDetails }) {
@@ -42,6 +42,11 @@ export default function Visit({ gym }: { gym: GymDetails }) {
               {gym.phone && (
                 <a href={`tel:${gym.phone.replace(/\s/g, "")}`} className="flex gap-3 hover:text-brand-red">
                   <Phone className="h-5 w-5 shrink-0 text-brand-red" /> {gym.phone}
+                </a>
+              )}
+              {gym.email && (
+                <a href={`mailto:${gym.email}`} className="flex gap-3 break-all hover:text-brand-red">
+                  <Mail className="h-5 w-5 shrink-0 text-brand-red" /> {gym.email}
                 </a>
               )}
               <a href={instagramUrl(gym)} target="_blank" rel="noreferrer" className="flex gap-3 hover:text-brand-red">

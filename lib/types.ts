@@ -52,14 +52,30 @@ export type JoinRequest = {
   email: string | null;
   age: number | null;
   gender: "male" | "female" | "other" | null;
-  plan: "gym" | "cardio";
+  plan: "gym" | "cardio" | "personal";
   timing: "morning" | "evening" | null;
   goal: string | null;
   area: string | null;
   notes: string | null;
   status: JoinStatus;
   created_at: string;
+  // Payment (migration 007). Older requests may have nulls.
+  token: string;
+  receipt_no: string;
+  joining_fee: number | null;
+  monthly_fee: number | null;
+  amount: number | null;
+  payment_method: PaymentMethod | null;
+  payment_status: OrderStatus;
+  utr: string | null;
+  paid_at: string | null;
 };
+
+/** A visitor's own join request, as returned by get_join_request(token). */
+export type PublicJoinRequest = Pick<
+  JoinRequest,
+  "receipt_no" | "name" | "phone" | "plan" | "joining_fee" | "monthly_fee" | "amount" | "payment_method" | "payment_status" | "utr" | "paid_at" | "status" | "created_at"
+>;
 
 /** A shop product. Prices are whole rupees. */
 export type Product = {
@@ -85,7 +101,7 @@ export type Member = {
   email: string | null;
   age: number | null;
   gender: "male" | "female" | "other" | null;
-  plan: "gym" | "cardio" | null;
+  plan: "gym" | "cardio" | "personal" | null;
   joined_on: string;
   paid_until: string | null;
   emergency_contact: string | null;

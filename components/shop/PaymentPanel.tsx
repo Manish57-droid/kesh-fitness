@@ -4,13 +4,18 @@ import QRCode from "qrcode";
 import { Check, Copy, Loader2, Smartphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { payment, rupees, upiLink } from "@/lib/site";
-import type { PublicOrder } from "@/lib/types";
+type Props = {
+  amount: number;
+  receiptNo: string;
+  token: string;
+  /** Database function that records the UTR: shop orders or join requests. */
+  utrFunction: "submit_utr" | "submit_join_utr";
+  onSubmitted: () => void;
+};
 
-type Props = { order: PublicOrder; token: string; onSubmitted: () => void };
-
-/** Shown on the receipt page while a UPI order is waiting for payment. */
-export default function PaymentPanel({ order, token, onSubmitted }: Props) {
-  const link = upiLink(order.total, order.receipt_no);
+/** UPI payment step (shown while an order or membership payment is waiting). */
+export default function PaymentPanel({ amount, receiptNo, token, utrFunction, onSubmitted }: Props) {
+  const link = upiLink(amount, receiptNo);
   const [qr, setQr] = useState("");
   const [showShopQr, setShowShopQr] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -35,7 +40,7 @@ export default function PaymentPanel({ order, token, onSubmitted }: Props) {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const { error } = await createClient().rpc("submit_utr", { p_token: token, p_utr: utr });
+    const { error } = await createClient().rpc(utrFunction, { p_token: token, p_utr: utr });
     setBusy(false);
     if (error) return setError(error.message);
     onSubmitted();
@@ -45,7 +50,7 @@ export default function PaymentPanel({ order, token, onSubmitted }: Props) {
     <div className="card border-brand-red p-4 sm:p-6 print:hidden">
       <p className="text-xs font-bold uppercase tracking-widest text-brand-red">Step 1 · Pay</p>
       <p className="mt-2 flex items-baseline gap-2">
-        <span className="font-display text-5xl leading-none">{rupees(order.total)}</span>
+        <span className="font-display text-5xl leading-none">{rupees(amount)}</span>
         <span className="text-sm text-brand-muted">to {payment.payeeName}</span>
       </p>
 
@@ -74,11 +79,11 @@ export default function PaymentPanel({ order, token, onSubmitted }: Props) {
         <div className="flex flex-col items-center gap-2">
           {qr ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qr} alt={`UPI QR code for ${rupees(order.total)}`} className="h-48 w-48 bg-white p-2" />
+            <img src={qr} alt={`UPI QR code for ${rupees(amount)}`} className="h-48 w-48 bg-white p-2" />
           ) : (
             <div className="h-48 w-48 animate-pulse bg-white/80" />
           )}
-          <p className="text-[11px] text-brand-muted">Scan to pay {rupees(order.total)}</p>
+          <p className="text-[11px] text-brand-muted">Scan to pay {rupees(amount)}</p>
           <button type="button" onClick={() => setShowShopQr(!showShopQr)} className="text-[11px] text-brand-red hover:underline">
             {showShopQr ? "Hide" : "Use"} our shop QR instead
           </button>
@@ -90,7 +95,7 @@ export default function PaymentPanel({ order, token, onSubmitted }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/upi-qr.jpg" alt="Kesh Fitness Paytm UPI QR" className="w-56 bg-white" />
           <p className="text-center text-xs text-amber-500">
-            This QR doesn&apos;t include the amount. Enter {rupees(order.total)} yourself when paying.
+            This QR doesn&apos;t include the amount. Enter {rupees(amount)} yourself when paying.
           </p>
         </div>
       )}

@@ -118,6 +118,7 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
                 <Text label="Address" value={g.address} onChange={(v) => patch("gym", { address: v })} />
                 <Text label="Map search" value={g.mapQuery} onChange={(v) => patch("gym", { mapQuery: v })} hint="What Google Maps should search for to find the gym." />
                 <Text label="Phone" value={g.phone} onChange={(v) => patch("gym", { phone: v })} placeholder="+91 98765 43210" hint="Leave empty to hide." />
+                <Text label="Trainer email" value={g.email} onChange={(v) => patch("gym", { email: v.trim() })} placeholder="name@gmail.com" maxLength={100} hint="Used for online coaching enquiries and contact. Leave empty to hide." />
                 <Text label="WhatsApp number" value={g.whatsapp} onChange={(v) => patch("gym", { whatsapp: v.replace(/\D/g, "") })} placeholder="919876543210" hint="Digits with country code. Leave empty to hide." />
                 <Text label="Instagram username" value={g.instagramHandle} onChange={(v) => patch("gym", { instagramHandle: v.replace(/^@/, "").trim() })} />
                 <Text label="YouTube link" value={g.youtube} onChange={(v) => patch("gym", { youtube: v })} maxLength={200} hint="Leave empty to hide." />
@@ -299,8 +300,21 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
                 );
               })}
               <p className="text-xs text-brand-muted">
-                There are always two plans, because join requests and members are linked to them. Prices here also update the join form.
+                There are always three plans, because join requests and members are linked to them. Prices here are used for the join form
+                and the amount people pay to join.
               </p>
+              <div className="space-y-3 border border-brand-red/50 bg-brand-red/5 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-brand-red">Online competition coaching</p>
+                <Toggle label="Show on website" checked={draft.plans.online.enabled} onChange={(v) => patch("plans", { online: { ...draft.plans.online, enabled: v } })} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Text label="Title" value={draft.plans.online.title} onChange={(v) => patch("plans", { online: { ...draft.plans.online, title: v } })} maxLength={40} />
+                  <Num label="Price (₹)" value={draft.plans.online.price} onChange={(v) => patch("plans", { online: { ...draft.plans.online, price: v } })} />
+                  <Text label="Duration" value={draft.plans.online.duration} onChange={(v) => patch("plans", { online: { ...draft.plans.online, duration: v } })} maxLength={30} />
+                </div>
+                <Area label="Description" value={draft.plans.online.text} onChange={(v) => patch("plans", { online: { ...draft.plans.online, text: v } })} />
+                <Lines label="What's included" value={draft.plans.online.perks} onChange={(v) => patch("plans", { online: { ...draft.plans.online, perks: v } })} />
+                <p className="text-xs text-brand-muted">Visitors tap “Email the trainer”, which uses the trainer email from Gym details.</p>
+              </div>
             </>
           )}
 
@@ -360,6 +374,10 @@ function tidy(c: SiteContent): SiteContent {
     about: { ...c.about, paragraphs: lines(c.about.paragraphs), stats: c.about.stats.filter((s) => s.value.trim() || s.label.trim()) },
     programs: { ...c.programs, items: c.programs.items.filter((p) => p.title.trim()) },
     coach: { ...c.coach, paragraphs: lines(c.coach.paragraphs) },
-    plans: { ...c.plans, items: c.plans.items.map((p) => ({ ...p, perks: lines(p.perks) })) },
+    plans: {
+      ...c.plans,
+      items: c.plans.items.map((p) => ({ ...p, perks: lines(p.perks) })),
+      online: { ...c.plans.online, perks: lines(c.plans.online.perks) },
+    },
   };
 }

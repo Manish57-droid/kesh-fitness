@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Instagram, Loader2, MessageCircle, Phone, Send } from "lucide-react";
+import { Instagram, Loader2, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import DumbbellArt from "../DumbbellArt";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -52,6 +52,7 @@ export default function MessageGym({ gym }: { gym: GymDetails }) {
   const quick = [
     gym.phone && { href: `tel:${gym.phone.replace(/\s/g, "")}`, label: "Call", Icon: Phone },
     gym.whatsapp && { href: `https://wa.me/${gym.whatsapp}`, label: "WhatsApp", Icon: MessageCircle },
+    gym.email && { href: `mailto:${gym.email}`, label: "Email", Icon: Mail },
     { href: instagramDM(gym), label: "Instagram", Icon: Instagram },
   ].filter(Boolean) as { href: string; label: string; Icon: typeof Phone }[];
 

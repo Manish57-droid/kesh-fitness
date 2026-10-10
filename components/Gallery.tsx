@@ -18,6 +18,8 @@ const fallback: Slide[] = [
 ];
 
 const SECONDS_PER_SLIDE = 5;
+// Each half of the track must be wider than any screen, or a gap shows before it loops.
+const MIN_TILES_PER_HALF = 10;
 
 export default function Gallery({ instagramHandle }: { instagramHandle: string }) {
   const [slides, setSlides] = useState<Slide[]>(fallback);
@@ -43,8 +45,11 @@ export default function Gallery({ instagramHandle }: { instagramHandle: string }
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Two copies side by side; the track slides left by one copy and loops seamlessly.
-  const track = [...slides, ...slides];
+  // The track is two identical halves; it slides left by exactly one half, then restarts
+  // at the same picture, so the loop is seamless. Short lists are repeated to fill a half.
+  const repeats = Math.max(1, Math.ceil(MIN_TILES_PER_HALF / Math.max(slides.length, 1)));
+  const half = Array.from({ length: repeats }, () => slides).flat();
+  const track = [...half, ...half];
 
   return (
     <section id="gallery" className="section overflow-hidden">
@@ -69,11 +74,11 @@ export default function Gallery({ instagramHandle }: { instagramHandle: string }
 
         <div className="motion-reduce:overflow-x-auto">
           <ul
-            className="flex w-max animate-marquee gap-3 group-hover:[animation-play-state:paused] motion-reduce:animate-none sm:gap-4"
-            style={{ animationDuration: `${slides.length * SECONDS_PER_SLIDE}s` }}
+            className="flex w-max animate-marquee motion-reduce:animate-none [@media(hover:hover)]:group-hover:[animation-play-state:paused]"
+            style={{ animationDuration: `${half.length * SECONDS_PER_SLIDE}s` }}
           >
             {track.map((s, i) => (
-              <li key={`${s.src}-${i}`} aria-hidden={i >= slides.length}>
+              <li key={`${s.src}-${i}`} aria-hidden={i >= slides.length} className="pr-3 sm:pr-4">
                 <button
                   onClick={() => setOpen(s)}
                   className="group/slide relative block w-56 overflow-hidden sm:w-72"

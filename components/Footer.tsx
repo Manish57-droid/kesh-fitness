@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Instagram, Youtube } from "lucide-react";
+import { Instagram, Mail, Youtube } from "lucide-react";
 import { defaultContent, instagramUrl, type GymDetails } from "@/lib/content";
 
 export default function Footer({ gym = defaultContent.gym }: { gym?: GymDetails }) {
   const socials = [
     { href: instagramUrl(gym), label: "Instagram", Icon: Instagram },
     ...(gym.youtube ? [{ href: gym.youtube, label: "YouTube", Icon: Youtube }] : []),
+    ...(gym.email ? [{ href: `mailto:${gym.email}`, label: "Email", Icon: Mail }] : []),
   ];
   return (
     <footer className="border-t border-brand-line bg-brand-black print:hidden">

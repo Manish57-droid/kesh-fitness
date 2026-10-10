@@ -88,7 +88,9 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
         </div>
       </div>
 
-      {awaitingUpi && <PaymentPanel order={order} token={token} onSubmitted={load} />}
+      {awaitingUpi && (
+        <PaymentPanel amount={order.total} receiptNo={order.receipt_no} token={token} utrFunction="submit_utr" onSubmitted={load} />
+      )}
 
       {/* Receipt */}
       <article id="receipt" className="relative overflow-hidden border border-brand-line bg-brand-card print:border-black/20">
@@ -165,7 +167,7 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
 
           <footer className="mt-8 border-t border-dashed border-brand-line pt-4 text-center text-xs text-brand-muted">
             <p className="font-semibold text-fg/80">Thank you for shopping with {gym.name}!</p>
-            <p className="mt-1">Collect your order at the gym counter · Instagram @{gym.instagramHandle}</p>
+            <p className="mt-1">Collect your order at the gym counter · Instagram @{gym.instagramHandle}{gym.email && ` · ${gym.email}`}</p>
             <p className="mt-1">This is a computer-generated receipt and does not need a signature.</p>
           </footer>
         </div>

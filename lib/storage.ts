@@ -21,4 +21,5 @@ export const KEYS = {
   readNotifications: "kesh-read-notifications",
   orders: "kesh-orders", // [{ token, receiptNo }] of shop orders placed on this device
   customer: "kesh-customer", // { name, phone } remembered for the next checkout
+  joins: "kesh-joins", // [{ token, receiptNo }] of join requests sent from this device
 };

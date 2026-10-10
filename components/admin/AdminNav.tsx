@@ -49,7 +49,7 @@ export default function AdminNav() {
     setMoreOpen(false);
     const supabase = createClient();
     Promise.all([
-      supabase.from("join_requests").select("id", { count: "exact", head: true }).eq("status", "new"),
+      supabase.from("join_requests").select("id", { count: "exact", head: true }).or("status.eq.new,payment_status.eq.verifying"),
       supabase.from("messages").select("id", { count: "exact", head: true }).eq("is_read", false),
       // Orders needing action: UPI to verify, or cash not collected yet.
       supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["verifying", "pending"]),
