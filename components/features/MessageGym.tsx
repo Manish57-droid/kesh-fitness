@@ -4,7 +4,6 @@ import { Instagram, Loader2, MessageCircle, Phone, Send } from "lucide-react";
 import DumbbellArt from "../DumbbellArt";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { PREFILL_MESSAGE_EVENT } from "@/lib/events";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
 import { timeAgo } from "@/lib/format";
 import { site } from "@/lib/site";
@@ -26,16 +25,6 @@ export default function MessageGym() {
     createClient()
       .rpc("get_my_messages", { p_tokens: tokens })
       .then(({ data }) => setMine((data as MyMessage[]) ?? []));
-  }, []);
-
-  // "Order" buttons in the Shop pre-fill the message.
-  useEffect(() => {
-    const onPrefill = (e: Event) => {
-      setBody((e as CustomEvent<string>).detail);
-      setSent(false);
-    };
-    window.addEventListener(PREFILL_MESSAGE_EVENT, onPrefill);
-    return () => window.removeEventListener(PREFILL_MESSAGE_EVENT, onPrefill);
   }, []);
 
   const send = async (e: React.FormEvent) => {

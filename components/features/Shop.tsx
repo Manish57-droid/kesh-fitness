@@ -1,16 +1,20 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { MessageCircle, ShoppingBag } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ShoppingBag, ShoppingCart } from "lucide-react";
 import Photo from "../Photo";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { PREFILL_MESSAGE_EVENT } from "@/lib/events";
-import { rupees, site } from "@/lib/site";
+import { rupees } from "@/lib/site";
 import type { Product } from "@/lib/types";
 
-const orderText = (p: Product) => `Hi, I'd like to buy ${p.name} (${rupees(p.price)}). Is it available?`;
+const PREVIEW_COUNT = 4;
 
-export default function Shop() {
+/**
+ * Product grid. `preview` = short version for the home page (first few products and a
+ * "View all" link); otherwise the full shop with category filters.
+ */
+export default function Shop({ preview = false }: { preview?: boolean }) {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [category, setCategory] = useState("All");
 
@@ -30,34 +34,26 @@ export default function Shop() {
     return ["All", ...Array.from(set).sort()];
   }, [products]);
 
-  const shown = (products ?? []).filter((p) => category === "All" || p.category === category);
-
-  // WhatsApp if a number is configured; otherwise pre-fill the on-site message form.
-  const order = (p: Product) => {
-    if (site.whatsapp) {
-      window.open(`https://wa.me/${site.whatsapp}?text=${encodeURIComponent(orderText(p))}`, "_blank");
-      return;
-    }
-    window.dispatchEvent(new CustomEvent<string>(PREFILL_MESSAGE_EVENT, { detail: orderText(p) }));
-    document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const filtered = (products ?? []).filter((p) => category === "All" || p.category === category);
+  const shown = preview ? filtered.slice(0, PREVIEW_COUNT) : filtered;
+  const Heading = preview ? "h2" : "h1";
 
   return (
-    <section id="shop" className="section bg-dumbbells bg-brand-ink">
+    <section id="shop" className={`section bg-dumbbells bg-brand-ink ${preview ? "" : "min-h-[70svh] pt-28 md:pt-32"}`}>
       <div className="container-x">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="eyebrow">Gym Store</p>
-            <h2 className="heading mt-5">
+            <Heading className="heading mt-5">
               Fuel Your <span className="text-brand-red">Gains</span>
-            </h2>
+            </Heading>
           </div>
           <p className="max-w-md text-sm text-fg/60">
-            Supplements and gear, available at the gym. Tap Order and we&apos;ll keep it ready for you.
+            Supplements and gear from the gym. Order online, pay by UPI or cash, and collect it at the counter.
           </p>
         </div>
 
-        {categories.length > 2 && (
+        {!preview && categories.length > 2 && (
           <div className="-mx-4 mt-8 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
             {categories.map((c) => (
               <button
@@ -87,56 +83,66 @@ export default function Shop() {
           </div>
         ) : (
           <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {shown.map((p) => {
-              const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
-              return (
-                <li key={p.id} className="flex flex-col border border-brand-line bg-brand-card">
-                  <div className="relative">
-                    <Photo
-                      src={p.image_url ?? ""}
-                      alt={p.name}
-                      className={`aspect-square w-full bg-white ${p.in_stock ? "" : "opacity-50 grayscale"}`}
-                    />
-                    {off > 0 && (
-                      <span className="absolute left-2 top-2 bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                        {off}% off
-                      </span>
-                    )}
-                    {!p.in_stock && (
-                      <span className="absolute inset-x-0 bottom-0 bg-black/75 py-1.5 text-center text-[11px] font-bold uppercase tracking-widest text-white">
-                        Out of stock
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col p-3 sm:p-4">
-                    {p.category && (
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-red">{p.category}</p>
-                    )}
-                    <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{p.name}</h3>
-                    {p.description && (
-                      <p className="mt-1 line-clamp-2 text-xs text-brand-muted">{p.description}</p>
-                    )}
-                    <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-3">
-                      <span className="font-display text-2xl leading-none sm:text-3xl">{rupees(p.price)}</span>
-                      {off > 0 && <span className="text-xs text-brand-muted line-through">{rupees(p.mrp!)}</span>}
-                    </p>
-                    {p.in_stock && p.quantity > 0 && p.quantity <= 3 && (
-                      <p className="mt-1 text-[11px] font-semibold text-amber-500">Hurry, only {p.quantity} left</p>
-                    )}
-                    <button
-                      onClick={() => order(p)}
-                      disabled={!p.in_stock}
-                      className="btn-primary btn-sm mt-3 w-full"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" /> {p.in_stock ? "Order" : "Unavailable"}
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
+            {shown.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </ul>
+        )}
+
+        {preview && (products?.length ?? 0) > 0 && (
+          <div className="mt-8 text-center">
+            <Link href="/shop" className="btn-ghost">
+              View all products <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         )}
       </div>
     </section>
+  );
+}
+
+function ProductCard({ product: p }: { product: Product }) {
+  const off = p.mrp && p.mrp > p.price ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+  return (
+    <li className="flex flex-col border border-brand-line bg-brand-card">
+      <div className="relative">
+        <Photo
+          src={p.image_url ?? ""}
+          alt={p.name}
+          className={`aspect-square w-full bg-white ${p.in_stock ? "" : "opacity-50 grayscale"}`}
+        />
+        {off > 0 && (
+          <span className="absolute left-2 top-2 bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+            {off}% off
+          </span>
+        )}
+        {!p.in_stock && (
+          <span className="absolute inset-x-0 bottom-0 bg-black/75 py-1.5 text-center text-[11px] font-bold uppercase tracking-widest text-white">
+            Out of stock
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        {p.category && <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-red">{p.category}</p>}
+        <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug sm:text-base">{p.name}</h3>
+        {p.description && <p className="mt-1 line-clamp-2 text-xs text-brand-muted">{p.description}</p>}
+        <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-3">
+          <span className="font-display text-2xl leading-none sm:text-3xl">{rupees(p.price)}</span>
+          {off > 0 && <span className="text-xs text-brand-muted line-through">{rupees(p.mrp!)}</span>}
+        </p>
+        {p.in_stock && p.quantity > 0 && p.quantity <= 3 && (
+          <p className="mt-1 text-[11px] font-semibold text-amber-500">Hurry, only {p.quantity} left</p>
+        )}
+        {p.in_stock ? (
+          <Link href={`/shop/checkout?product=${p.id}`} className="btn-primary btn-sm mt-3 w-full">
+            <ShoppingCart className="h-3.5 w-3.5" /> Order Now
+          </Link>
+        ) : (
+          <span className="btn-sm mt-3 w-full cursor-not-allowed border border-brand-line text-center text-brand-muted">
+            Unavailable
+          </span>
+        )}
+      </div>
+    </li>
   );
 }

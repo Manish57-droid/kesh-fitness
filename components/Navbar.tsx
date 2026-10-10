@@ -12,7 +12,7 @@ const links = [
   { label: "Programs", href: "/#programs" },
   { label: "Planner", href: "/#planner" },
   { label: "Plans", href: "/#plans" },
-  { label: "Shop", href: "/#shop" },
+  { label: "Shop", href: "/shop" },
   { label: "Join", href: "/#join" },
   { label: "Contact", href: "/#contact" },
   { label: "Visit", href: "/#visit" },
@@ -33,7 +33,7 @@ export default function Navbar({ solid = false }: { solid?: boolean }) {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 print:hidden ${
         solid || scrolled || open
           ? "border-b border-brand-line bg-brand-black/90 backdrop-blur-md"
           : "bg-transparent"

@@ -97,3 +97,41 @@ export type Member = {
   created_at: string;
   updated_at: string;
 };
+
+export type OrderStatus = "pending" | "verifying" | "paid" | "cancelled";
+export type PaymentMethod = "upi" | "cash";
+
+/** A shop order as the admin sees it (migration 004). Amounts are whole rupees. */
+export type Order = {
+  id: number;
+  receipt_no: string;
+  token: string;
+  customer_name: string;
+  customer_phone: string;
+  product_id: number | null;
+  product_name: string;
+  unit_price: number;
+  quantity: number;
+  subtotal: number;
+  service_charge: number;
+  total: number;
+  payment_method: PaymentMethod;
+  status: OrderStatus;
+  utr: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** A customer's own order, as returned by get_order(token). */
+export type PublicOrder = Omit<Order, "id" | "token" | "product_id" | "updated_at">;
+
+/** A photo in the website gallery slideshow (migration 004). */
+export type GalleryPhoto = {
+  id: number;
+  image_url: string;
+  caption: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+};

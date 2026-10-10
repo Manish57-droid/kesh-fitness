@@ -2,7 +2,7 @@ import { MapPin, MessageSquare, ShoppingBag, Tag, UserPlus } from "lucide-react"
 
 const items = [
   { href: "/#plans", label: "Plans", Icon: Tag },
-  { href: "/#shop", label: "Shop", Icon: ShoppingBag },
+  { href: "/shop", label: "Shop", Icon: ShoppingBag },
   { href: "/#join", label: "Join", Icon: UserPlus, highlight: true },
   { href: "/#contact", label: "Message", Icon: MessageSquare },
   { href: "/#visit", label: "Visit", Icon: MapPin },
@@ -13,7 +13,7 @@ export default function MobileNav() {
   return (
     <nav
       aria-label="Quick navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-line bg-brand-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-line bg-brand-black/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden print:hidden"
     >
       <ul className="grid grid-cols-5">
         {items.map(({ href, label, Icon, highlight }) => (

@@ -28,7 +28,7 @@ export default function Home() {
         <Coach />
         <Plans />
         <JoinForm />
-        <Shop />
+        <Shop preview />
         <Gallery />
         <MessageGym />
         <Visit />

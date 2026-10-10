@@ -23,7 +23,7 @@ The site and the workout planner work without any setup. The join form, message 
 - Paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click *Run*. It should say "Success. No rows returned".
 - This creates: `profiles` (admin role), `join_requests`, `messages`, `notifications`, `products`, a public `products` storage bucket for product photos, the security rules, and live updates for announcements.
 - Safe to run again whenever the file changes.
-- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity). Each file only contains new changes, so you never need to re-run old ones.
+- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity, `004_orders_gallery.sql` adds shop orders/payments and the admin photo gallery). Each file only contains new changes, so you never need to re-run old ones.
 
 **3. Connect the website**
 - Left sidebar → *Project Settings* → *API* (or *API Keys*).
@@ -65,10 +65,12 @@ The site and the workout planner work without any setup. The join form, message 
 | Weekly workout planner (saved on their own phone) | ✓ | ✓ |
 | Message the gym and see replies on the site | ✓ | ✓ |
 | Announcement bell + live pop-ups | ✓ | ✓ |
-| Browse the Shop and order a product | ✓ | ✓ |
+| Shop page: order with quantity, pay by UPI or cash, get a receipt | ✓ | ✓ |
 | Admin Panel (`/admin`): join requests, messages, replies, call / WhatsApp | | ✓ |
 | Active Members: details, fees-paid tracking, active / inactive | | ✓ |
 | Add, edit, hide and delete products (with photos), mark in / out of stock | | ✓ |
+| Transactions: confirm UPI payments (check UTR), mark cash received, cancel, export CSV | | ✓ |
+| Gallery: upload, caption, reorder, hide and delete slideshow photos | | ✓ |
 | Send announcements to everyone | | ✓ |
 
 Access rules are enforced in the database with Row Level Security. Visitors can only add join requests and messages, read visible products, and read their own message replies using a secret token saved in their browser. Only the admin can upload or delete product photos.
