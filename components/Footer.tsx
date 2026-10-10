@@ -1,25 +1,26 @@
 import Link from "next/link";
 import { Instagram, Youtube } from "lucide-react";
-import { site } from "@/lib/site";
+import { defaultContent, instagramUrl, type GymDetails } from "@/lib/content";
 
-export default function Footer() {
+export default function Footer({ gym = defaultContent.gym }: { gym?: GymDetails }) {
+  const socials = [
+    { href: instagramUrl(gym), label: "Instagram", Icon: Instagram },
+    ...(gym.youtube ? [{ href: gym.youtube, label: "YouTube", Icon: Youtube }] : []),
+  ];
   return (
-    <footer className="border-t border-brand-line bg-brand-black">
+    <footer className="border-t border-brand-line bg-brand-black print:hidden">
       <div className="container-x flex flex-col items-center justify-between gap-6 py-10 text-center md:flex-row md:text-left">
         <div>
           <p className="font-display text-3xl tracking-wider">
             KESH <span className="text-brand-red">FITNESS</span>
           </p>
           <p className="mt-1 text-xs text-brand-muted">
-            {site.tagline} · {site.address}
+            {gym.tagline} · {gym.address}
           </p>
         </div>
 
         <div className="flex gap-3">
-          {[
-            { href: site.instagram, label: "Instagram", Icon: Instagram },
-            { href: site.youtube, label: "YouTube", Icon: Youtube },
-          ].map(({ href, label, Icon }) => (
+          {socials.map(({ href, label, Icon }) => (
             <a
               key={label}
               href={href}
@@ -34,7 +35,7 @@ export default function Footer() {
         </div>
 
         <p className="text-xs text-brand-muted">
-          © {new Date().getFullYear()} {site.name}. All rights reserved.
+          © {new Date().getFullYear()} {gym.name}. All rights reserved.
           <span className="mx-2">·</span>
           <Link href="/admin/login" className="hover:text-fg">
             Admin

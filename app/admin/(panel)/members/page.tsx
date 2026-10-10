@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import AdminHeader from "@/components/admin/AdminHeader";
 import MembersView from "@/components/admin/MembersView";
 import { requireAdmin } from "@/lib/auth";
+import { getContent } from "@/lib/content-server";
 import type { JoinRequest, Member } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Active Members – Kesh Fitness Admin" };
@@ -9,6 +10,7 @@ export const metadata: Metadata = { title: "Active Members – Kesh Fitness Admi
 export default async function MembersPage({ searchParams }: { searchParams: { from?: string } }) {
   const { supabase } = await requireAdmin();
   const fromId = Number(searchParams.from);
+  const { plans } = await getContent();
 
   const [members, fromRequest] = await Promise.all([
     supabase.from("members").select("*").order("name"),
@@ -22,6 +24,7 @@ export default async function MembersPage({ searchParams }: { searchParams: { fr
       <MembersView
         initial={(members.data as Member[]) ?? []}
         fromRequest={(fromRequest.data as JoinRequest | null) ?? null}
+        plans={plans.items}
         tableMissing={members.error?.code === "42P01" || members.error?.code === "PGRST205"}
       />
     </>

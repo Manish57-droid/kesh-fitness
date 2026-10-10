@@ -14,27 +14,32 @@ import Visit from "@/components/Visit";
 import JoinCTA from "@/components/JoinCTA";
 import Footer from "@/components/Footer";
 import MobileNav from "@/components/MobileNav";
+import { getContent } from "@/lib/content-server";
 
-export default function Home() {
+// Re-built when the admin saves content (see /api/revalidate), and at least every 10 minutes.
+export const revalidate = 600;
+
+export default async function Home() {
+  const c = await getContent();
   return (
     <>
       <Navbar />
       <main>
-        <Hero />
-        <Marquee />
-        <About />
-        <Programs />
+        <Hero c={c.hero} address={c.gym.address} />
+        <Marquee words={c.marquee} />
+        <About c={c.about} />
+        <Programs c={c.programs} />
         <WorkoutPlanner />
-        <Coach />
-        <Plans />
-        <JoinForm />
+        <Coach c={c.coach} gym={c.gym} />
+        <Plans c={c.plans} />
+        <JoinForm plans={c.plans} gymName={c.gym.name} team={c.gym.team} />
         <Shop preview />
-        <Gallery />
-        <MessageGym />
-        <Visit />
-        <JoinCTA />
+        <Gallery instagramHandle={c.gym.instagramHandle} />
+        <MessageGym gym={c.gym} />
+        <Visit gym={c.gym} />
+        <JoinCTA c={c.joinCta} />
       </main>
-      <Footer />
+      <Footer gym={c.gym} />
       <MobileNav />
     </>
   );

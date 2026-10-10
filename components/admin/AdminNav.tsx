@@ -6,6 +6,7 @@ import {
   ClipboardList,
   ExternalLink,
   Images,
+  LayoutTemplate,
   Inbox,
   LogOut,
   Megaphone,
@@ -29,6 +30,7 @@ const links: { href: string; label: string; short: string; Icon: typeof Inbox; b
   { href: "/admin/gallery", label: "Gallery", short: "Gallery", Icon: Images },
   { href: "/admin/announcements", label: "Announcements", short: "Announce", Icon: Megaphone },
   { href: "/admin/members", label: "Active Members", short: "Members", Icon: Users },
+  { href: "/admin/content", label: "Website", short: "Website", Icon: LayoutTemplate },
 ];
 
 /** Admin-only navigation: top bar on desktop, bottom tab bar (+ "More") on phones. */
@@ -56,7 +58,7 @@ export default function AdminNav() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/admin/login");
+    router.push("/");
     router.refresh();
   };
 
@@ -90,8 +92,8 @@ export default function AdminNav() {
                     }`}
                   >
                     <Icon className="h-4 w-4" />
-                    <span className="xl:hidden">{short}</span>
-                    <span className="hidden xl:inline">{label}</span>
+                    {/* icons only on small laptops (name in the tooltip), short names on wider screens */}
+                    <span className="hidden xl:inline">{short}</span>
                     {!active && n > 0 && (
                       <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-bold text-white">
                         {badgeText(n)}

@@ -6,7 +6,8 @@ import MemberForm from "./MemberForm";
 import { whatsappLink } from "./MessagesView";
 import { createClient } from "@/lib/supabase/client";
 import { addMonths, daysBetween, formatDay, todayISO } from "@/lib/format";
-import { pricing, rupees } from "@/lib/site";
+import { rupees } from "@/lib/site";
+import type { PlanContent } from "@/lib/content";
 import type { JoinRequest, Member } from "@/lib/types";
 
 type Filter = "active" | "due" | "inactive" | "all";
@@ -15,9 +16,10 @@ type Props = {
   initial: Member[];
   fromRequest: JoinRequest | null;
   tableMissing: boolean;
+  plans: PlanContent[];
 };
 
-export default function MembersView({ initial, fromRequest, tableMissing }: Props) {
+export default function MembersView({ initial, fromRequest, tableMissing, plans }: Props) {
   const router = useRouter();
   const [members, setMembers] = useState(initial);
   const [filter, setFilter] = useState<Filter>("active");
@@ -157,7 +159,7 @@ export default function MembersView({ initial, fromRequest, tableMissing }: Prop
       ) : (
         <ul className="mt-4 grid gap-3 lg:grid-cols-2">
           {shown.map((m) => {
-            const plan = pricing.plans.find((p) => p.id === m.plan);
+            const plan = plans.find((p) => p.id === m.plan);
             const extras = [
               plan && `${plan.name} · ${rupees(plan.monthly)}/mo`,
               m.age && `${m.age} yrs`,
@@ -225,6 +227,7 @@ export default function MembersView({ initial, fromRequest, tableMissing }: Prop
 
       {editing && (
         <MemberForm
+          plans={plans}
           member={editing === "new" ? null : editing}
           fromRequest={editing === "new" ? fromRequest : null}
           onClose={closeForm}

@@ -6,10 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
 import { timeAgo } from "@/lib/format";
-import { site } from "@/lib/site";
+import { instagramDM, type GymDetails } from "@/lib/content";
 import type { MyMessage } from "@/lib/types";
 
-export default function MessageGym() {
+export default function MessageGym({ gym }: { gym: GymDetails }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [body, setBody] = useState("");
@@ -50,9 +50,9 @@ export default function MessageGym() {
   };
 
   const quick = [
-    site.phone && { href: `tel:${site.phone.replace(/\s/g, "")}`, label: "Call", Icon: Phone },
-    site.whatsapp && { href: `https://wa.me/${site.whatsapp}`, label: "WhatsApp", Icon: MessageCircle },
-    { href: site.instagramDM, label: "Instagram", Icon: Instagram },
+    gym.phone && { href: `tel:${gym.phone.replace(/\s/g, "")}`, label: "Call", Icon: Phone },
+    gym.whatsapp && { href: `https://wa.me/${gym.whatsapp}`, label: "WhatsApp", Icon: MessageCircle },
+    { href: instagramDM(gym), label: "Instagram", Icon: Instagram },
   ].filter(Boolean) as { href: string; label: string; Icon: typeof Phone }[];
 
   return (
@@ -116,7 +116,7 @@ export default function MessageGym() {
                     <p className="mt-1.5 whitespace-pre-line break-words text-sm">{m.body}</p>
                     {m.reply && (
                       <div className="mt-3 border-l-2 border-brand-red bg-fg/5 px-3 py-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-red">{site.name}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-red">{gym.name}</p>
                         <p className="mt-1 whitespace-pre-line break-words text-sm text-fg/80">{m.reply}</p>
                       </div>
                     )}

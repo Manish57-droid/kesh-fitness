@@ -1,7 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import { joinHref } from "@/lib/site";
+import type { SiteContent } from "@/lib/content";
 
-export default function JoinCTA() {
+export default function JoinCTA({ c }: { c: SiteContent["joinCta"] }) {
   return (
     <section className="relative overflow-hidden bg-brand-red">
       <div
@@ -13,19 +14,17 @@ export default function JoinCTA() {
       <div className="container-x relative flex flex-col items-start justify-between gap-8 py-16 md:flex-row md:items-center md:py-20">
         <div>
           <h2 className="font-display text-5xl leading-[0.95] tracking-wide md:text-7xl">
-            Your First Workout
+            {c.line1}
             <br />
-            Starts Today.
+            {c.line2}
           </h2>
-          <p className="mt-4 max-w-md text-white/85">
-            Drop by the gym or send us a message. We'll show you around and help you get started.
-          </p>
+          <p className="mt-4 max-w-md text-white/85">{c.text}</p>
         </div>
         <a
           href={joinHref}
           className="btn shrink-0 bg-neutral-950 text-white hover:bg-black"
         >
-          Join Kesh Fitness <ArrowRight className="h-4 w-4" />
+          {c.button} <ArrowRight className="h-4 w-4" />
         </a>
       </div>
     </section>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Mail, MessageCircle, Phone, Search, Trash2, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, timeAgo } from "@/lib/format";
-import { pricing, rupees } from "@/lib/site";
+import { rupees } from "@/lib/site";
+import type { PlanContent } from "@/lib/content";
 import { whatsappLink } from "./MessagesView";
 import type { JoinRequest, JoinStatus } from "@/lib/types";
 
@@ -17,9 +18,10 @@ const statuses: { id: JoinStatus; label: string; className: string }[] = [
 
 type Props = {
   initial: JoinRequest[];
+  plans: PlanContent[];
 };
 
-export default function JoinRequestsView({ initial }: Props) {
+export default function JoinRequestsView({ initial, plans }: Props) {
   const [requests, setRequests] = useState(initial);
   const [filter, setFilter] = useState<JoinStatus | "all">("all");
   const [query, setQuery] = useState("");
@@ -80,7 +82,7 @@ export default function JoinRequestsView({ initial }: Props) {
       ) : (
         <ul className="mt-4 grid gap-3 lg:grid-cols-2">
           {shown.map((r) => {
-            const plan = pricing.plans.find((p) => p.id === r.plan);
+            const plan = plans.find((p) => p.id === r.plan);
             const details = [
               ["Plan", plan ? `${plan.name} · ${rupees(plan.monthly)}/mo` : r.plan],
               ["Age", r.age],

@@ -6,12 +6,13 @@ import PaymentPanel from "./PaymentPanel";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { formatIST, rupeesInWords } from "@/lib/format";
-import { payment, rupees, site } from "@/lib/site";
+import { payment, rupees } from "@/lib/site";
+import type { GymDetails } from "@/lib/content";
 import type { PublicOrder } from "@/lib/types";
 
 const POLL_MS = 15_000;
 
-export default function ReceiptView({ token }: { token: string }) {
+export default function ReceiptView({ token, gym }: { token: string; gym: GymDetails }) {
   const [order, setOrder] = useState<PublicOrder | null | undefined>(undefined);
   const [shared, setShared] = useState(false);
 
@@ -98,8 +99,8 @@ export default function ReceiptView({ token }: { token: string }) {
               <p className="font-display text-3xl tracking-wider">
                 KESH <span className="text-brand-red">FITNESS</span>
               </p>
-              <p className="mt-1 text-xs text-brand-muted">{site.tagline}</p>
-              <p className="text-xs text-brand-muted">{site.address}</p>
+              <p className="mt-1 text-xs text-brand-muted">{gym.tagline}</p>
+              <p className="text-xs text-brand-muted">{gym.address}</p>
               <p className="text-xs text-brand-muted">UPI: {payment.upiId}</p>
             </div>
             <div className="sm:text-right">
@@ -163,8 +164,8 @@ export default function ReceiptView({ token }: { token: string }) {
           <p className="mt-3 text-right text-xs italic text-brand-muted">{rupeesInWords(order.total)}</p>
 
           <footer className="mt-8 border-t border-dashed border-brand-line pt-4 text-center text-xs text-brand-muted">
-            <p className="font-semibold text-fg/80">Thank you for shopping with {site.name}!</p>
-            <p className="mt-1">Collect your order at the gym counter · Instagram @{site.instagramHandle}</p>
+            <p className="font-semibold text-fg/80">Thank you for shopping with {gym.name}!</p>
+            <p className="mt-1">Collect your order at the gym counter · Instagram @{gym.instagramHandle}</p>
             <p className="mt-1">This is a computer-generated receipt and does not need a signature.</p>
           </footer>
         </div>

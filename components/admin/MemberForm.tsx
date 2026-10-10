@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { todayISO } from "@/lib/format";
-import { pricing } from "@/lib/site";
+import type { PlanContent } from "@/lib/content";
 import type { JoinRequest, Member } from "@/lib/types";
 
 type Props = {
@@ -11,9 +11,10 @@ type Props = {
   fromRequest?: JoinRequest | null; // pre-fill from a join request
   onClose: () => void;
   onSaved: (m: Member) => void;
+  plans: PlanContent[];
 };
 
-export default function MemberForm({ member, fromRequest, onClose, onSaved }: Props) {
+export default function MemberForm({ member, fromRequest, onClose, onSaved, plans }: Props) {
   const src = member ?? fromRequest;
   const [form, setForm] = useState({
     name: src?.name ?? "",
@@ -124,7 +125,7 @@ export default function MemberForm({ member, fromRequest, onClose, onSaved }: Pr
               <label htmlFor="m-plan" className="label">Plan</label>
               <select id="m-plan" className="input" value={form.plan} onChange={set("plan")}>
                 <option value="">Not set</option>
-                {pricing.plans.map((p) => (
+                {plans.map((p) => (
                   <option key={p.id} value={p.id}>{p.name} (₹{p.monthly}/mo)</option>
                 ))}
               </select>

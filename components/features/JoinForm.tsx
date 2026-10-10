@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, ClipboardList, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { pricing, rupees, site, type PlanId } from "@/lib/site";
+import { rupees, type PlanId } from "@/lib/site";
+import type { SiteContent } from "@/lib/content";
 import DumbbellArt from "../DumbbellArt";
 import { PLAN_EVENT } from "@/lib/events";
 
@@ -22,7 +23,9 @@ const empty = {
   notes: "",
 };
 
-export default function JoinForm() {
+type Props = { plans: SiteContent["plans"]; gymName: string; team: string };
+
+export default function JoinForm({ plans, gymName, team }: Props) {
   const [form, setForm] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -39,7 +42,7 @@ export default function JoinForm() {
     (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm({ ...form, [k]: e.target.value });
 
-  const plan = pricing.plans.find((p) => p.id === form.plan) ?? pricing.plans[0];
+  const plan = plans.items.find((p) => p.id === form.plan) ?? plans.items[0];
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +83,7 @@ export default function JoinForm() {
             Fill in your details and our team will call you to confirm your membership and your first day.
           </p>
           <div className="mt-8 space-y-3 text-sm">
-            {pricing.plans.map((p) => (
+            {plans.items.map((p) => (
               <p key={p.id} className="flex justify-between gap-4 border-b border-brand-line pb-3">
                 <span className="text-fg/70">{p.name}</span>
                 <span className="font-semibold">{rupees(p.monthly)} / month</span>
@@ -88,7 +91,7 @@ export default function JoinForm() {
             ))}
             <p className="flex justify-between gap-4">
               <span className="text-fg/70">Joining fee (one-time)</span>
-              <span className="font-semibold">{rupees(pricing.joiningFee)}</span>
+              <span className="font-semibold">{rupees(plans.joiningFee)}</span>
             </p>
           </div>
           <DumbbellArt className="mt-16 hidden w-72 -rotate-[18deg] text-brand-red/20 lg:block" />
@@ -99,7 +102,7 @@ export default function JoinForm() {
             <CheckCircle2 className="h-14 w-14 text-emerald-500" strokeWidth={1.5} />
             <h3 className="mt-5 font-display text-4xl tracking-wide">You&apos;re In!</h3>
             <p className="mt-2 max-w-sm text-sm text-fg/70">
-              Thanks for joining {site.team}. We&apos;ll call you soon to confirm. See you at the gym!
+              Thanks for joining {team}. We&apos;ll call you soon to confirm. See you at the gym!
             </p>
             <button onClick={() => setDone(false)} className="btn-ghost btn-sm mt-6">
               Submit another form
@@ -156,7 +159,7 @@ export default function JoinForm() {
             <div>
               <p className="label">Plan *</p>
               <div className="grid grid-cols-2 gap-2">
-                {pricing.plans.map((p) => (
+                {plans.items.map((p) => (
                   <label
                     key={p.id}
                     className={`cursor-pointer border p-3 transition ${
@@ -177,8 +180,8 @@ export default function JoinForm() {
                 ))}
               </div>
               <p className="mt-2 text-xs text-brand-muted">
-                First month total: <span className="font-semibold text-fg">{rupees(plan.monthly + pricing.joiningFee)}</span>{" "}
-                (incl. {rupees(pricing.joiningFee)} joining fee)
+                First month total: <span className="font-semibold text-fg">{rupees(plan.monthly + plans.joiningFee)}</span>{" "}
+                (incl. {rupees(plans.joiningFee)} joining fee)
               </p>
             </div>
 
@@ -216,7 +219,7 @@ export default function JoinForm() {
               Submit &amp; Join
             </button>
             <p className="text-center text-[11px] text-brand-muted">
-              Your details are only seen by the {site.name} team.
+              Your details are only seen by the {gymName} team.
             </p>
           </form>
         )}

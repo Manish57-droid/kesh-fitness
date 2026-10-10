@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Transactions – Kesh Fitness Admin"
 
 export default async function TransactionsPage() {
   const { supabase } = await requireAdmin();
-  const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(500);
+  const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000);
   const missing = error?.code === "42P01" || error?.code === "PGRST205";
   return (
     <>

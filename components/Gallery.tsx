@@ -4,7 +4,6 @@ import { Instagram, X } from "lucide-react";
 import Photo from "./Photo";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { site } from "@/lib/site";
 
 type Slide = { src: string; caption: string | null };
 
@@ -20,7 +19,7 @@ const fallback: Slide[] = [
 
 const SECONDS_PER_SLIDE = 5;
 
-export default function Gallery() {
+export default function Gallery({ instagramHandle }: { instagramHandle: string }) {
   const [slides, setSlides] = useState<Slide[]>(fallback);
   const [open, setOpen] = useState<Slide | null>(null);
 
@@ -57,8 +56,8 @@ export default function Gallery() {
               The <span className="text-brand-red">Grind</span>
             </h2>
           </div>
-          <a href={site.instagram} target="_blank" rel="noreferrer" className="btn-ghost self-start md:self-auto">
-            <Instagram className="h-4 w-4" /> @{site.instagramHandle}
+          <a href={`https://www.instagram.com/${instagramHandle}/`} target="_blank" rel="noreferrer" className="btn-ghost self-start md:self-auto">
+            <Instagram className="h-4 w-4" /> @{instagramHandle}
           </a>
         </div>
       </div>

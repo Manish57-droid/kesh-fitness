@@ -1,9 +1,9 @@
 import { Clock, Instagram, MapPin, Phone } from "lucide-react";
-import { site } from "@/lib/site";
+import { instagramUrl, type GymDetails } from "@/lib/content";
 
-export default function Visit() {
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(site.mapQuery)}&z=15&output=embed`;
-  const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.mapQuery)}`;
+export default function Visit({ gym }: { gym: GymDetails }) {
+  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(gym.mapQuery)}&z=15&output=embed`;
+  const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(gym.mapQuery)}`;
 
   return (
     <section id="visit" className="section bg-dumbbells bg-brand-ink">
@@ -21,7 +21,7 @@ export default function Visit() {
                 <h3 className="font-display text-3xl tracking-wide">Gym Timings</h3>
               </div>
               <ul className="mt-6 divide-y divide-brand-line">
-                {site.hours.map((h) => (
+                {gym.hours.map((h) => (
                   <li key={h.days} className="flex justify-between gap-4 py-4 text-sm">
                     <span className="text-fg/60">{h.days}</span>
                     <span className="text-right font-medium">
@@ -37,15 +37,15 @@ export default function Visit() {
             <div className="space-y-5 border border-brand-line bg-brand-black p-5 sm:p-8 text-sm">
               <p className="flex gap-3">
                 <MapPin className="h-5 w-5 shrink-0 text-brand-red" />
-                <span className="text-fg/80">{site.address}</span>
+                <span className="text-fg/80">{gym.address}</span>
               </p>
-              {site.phone && (
-                <a href={`tel:${site.phone.replace(/\s/g, "")}`} className="flex gap-3 hover:text-brand-red">
-                  <Phone className="h-5 w-5 shrink-0 text-brand-red" /> {site.phone}
+              {gym.phone && (
+                <a href={`tel:${gym.phone.replace(/\s/g, "")}`} className="flex gap-3 hover:text-brand-red">
+                  <Phone className="h-5 w-5 shrink-0 text-brand-red" /> {gym.phone}
                 </a>
               )}
-              <a href={site.instagram} target="_blank" rel="noreferrer" className="flex gap-3 hover:text-brand-red">
-                <Instagram className="h-5 w-5 shrink-0 text-brand-red" /> @{site.instagramHandle}
+              <a href={instagramUrl(gym)} target="_blank" rel="noreferrer" className="flex gap-3 hover:text-brand-red">
+                <Instagram className="h-5 w-5 shrink-0 text-brand-red" /> @{gym.instagramHandle}
               </a>
               <a href={directions} target="_blank" rel="noreferrer" className="btn-primary w-full">
                 Get Directions

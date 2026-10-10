@@ -23,7 +23,7 @@ The site and the workout planner work without any setup. The join form, message 
 - Paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click *Run*. It should say "Success. No rows returned".
 - This creates: `profiles` (admin role), `join_requests`, `messages`, `notifications`, `products`, a public `products` storage bucket for product photos, the security rules, and live updates for announcements.
 - Safe to run again whenever the file changes.
-- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity, `004_orders_gallery.sql` adds shop orders/payments and the admin photo gallery, `005_unlimited_stock.sql` turns off stock limits). Each file only contains new changes, so you never need to re-run old ones.
+- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity, `004_orders_gallery.sql` adds shop orders/payments and the admin photo gallery, `005_unlimited_stock.sql` turns off stock limits, `006_site_content.sql` lets the admin edit the website). Each file only contains new changes, so you never need to re-run old ones.
 
 **3. Connect the website**
 - Left sidebar → *Project Settings* → *API* (or *API Keys*).
@@ -71,12 +71,14 @@ The site and the workout planner work without any setup. The join form, message 
 | Add, edit, hide and delete products (with photos), mark in / out of stock | | ✓ |
 | Transactions: confirm UPI payments (check UTR), mark cash received, cancel, export CSV | | ✓ |
 | Gallery: upload, caption, reorder, hide and delete slideshow photos | | ✓ |
+| Website: edit home-page text, photos, prices, timings and contact details | | ✓ |
 | Send announcements to everyone | | ✓ |
 
 Access rules are enforced in the database with Row Level Security. Visitors can only add join requests and messages, read visible products, and read their own message replies using a secret token saved in their browser. Only the admin can upload or delete product photos.
 
 ## Editing content
 
-- Gym details, prices, timings, social links: [`lib/site.ts`](lib/site.ts)
+- Gym details, texts, photos, prices, timings: **Admin → Website** (defaults in [`lib/content.ts`](lib/content.ts))
+- UPI ID and service charge: [`lib/site.ts`](lib/site.ts)
 - Photos: [`public/images/`](public/images/) (see the README there)
 - Exercise suggestions in the planner: [`lib/exercises.ts`](lib/exercises.ts)
