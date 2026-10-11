@@ -20,7 +20,7 @@ import { rupees } from "@/lib/site";
 import type { Order, OrderStatus } from "@/lib/types";
 
 type Filter = "all" | "verify" | "cash" | "upi_unpaid" | "paid" | "fees" | "shop" | "cancelled";
-type View = { kind: "month"; key: string } | { kind: "attention" };
+type View = { kind: "month"; key: string } | { kind: "attention" } | { kind: "all" };
 
 const FILTERS: { id: Filter; label: string; test: (o: Order) => boolean }[] = [
   { id: "all", label: "All", test: () => true },
@@ -97,7 +97,11 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
       )
     : view.kind === "attention"
       ? attention
-      : byMonth.get(view.key) ?? [];
+      : view.kind === "all"
+        ? orders
+        : byMonth.get(view.key) ?? [];
+  const allMonths = Array.from(byMonth.keys()).sort().reverse();
+  const showMonthTable = view.kind === "all" && !searching;
   const active = FILTERS.find((f) => f.id === filter)!;
   const shown = base.filter(active.test);
 
@@ -131,7 +135,7 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
       o.unit_price, o.subtotal, o.service_charge, o.total, o.payment_method, o.status, o.utr ?? "", o.paid_at ? formatIST(o.paid_at) : "",
     ]);
     const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const name = searching ? "search" : view.kind === "attention" ? "needs-action" : view.key;
+    const name = searching ? "search" : view.kind === "month" ? view.key : view.kind === "all" ? "all-months" : "needs-action";
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     a.download = `kesh-fitness-transactions-${name}.csv`;
@@ -144,9 +148,11 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
     ? `Search results`
     : view.kind === "attention"
       ? "Needs action (all months)"
-      : viewingCurrent
+      : view.kind === "all"
+        ? "All months"
+        : viewingCurrent
         ? `This month · ${monthLabel(current)}`
-        : monthLabel(view.key);
+        : monthLabel((view as { key: string }).key);
 
   const stats = [
     { label: "Collected", value: rupees(sumPaid(base)) },
@@ -174,10 +180,29 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
         </button>
       )}
 
+      {/* This month / All months */}
+      <div className="mb-5 inline-flex border border-brand-line">
+        {([
+          ["month", "This month"],
+          ["all", "All months"],
+        ] as const).map(([id, label]) => {
+          const on = id === "all" ? view.kind === "all" : viewingCurrent;
+          return (
+            <button
+              key={id}
+              onClick={() => (id === "all" ? (setView({ kind: "all" }), setFilter("all"), setQuery("")) : openMonth(current))}
+              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${on ? "bg-brand-red text-white" : "text-fg/60 hover:text-fg"}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Header + back */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          {(!viewingCurrent || searching) && (
+          {(!viewingCurrent || searching) && view.kind !== "all" && (
             <button
               onClick={() => openMonth(current)}
               className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-muted hover:text-fg"
@@ -213,6 +238,10 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
         ))}
       </div>
 
+      {showMonthTable ? (
+        <MonthTable months={allMonths} byMonth={byMonth} current={current} onOpen={openMonth} />
+      ) : (
+        <>
       <div className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         {FILTERS.map((f) => (
           <button
@@ -244,6 +273,8 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
             />
           ))}
         </ul>
+      )}
+        </>
       )}
 
       {/* Folders for finished months */}
@@ -356,5 +387,84 @@ function OrderCard({
         )}
       </div>
     </li>
+  );
+}
+
+/** Month-by-month summary (newest first). Tap a month to open its transactions. */
+function MonthTable({
+  months,
+  byMonth,
+  current,
+  onOpen,
+}: {
+  months: string[];
+  byMonth: Map<string, Order[]>;
+  current: string;
+  onOpen: (key: string) => void;
+}) {
+  if (months.length === 0) {
+    return <p className="mt-6 border border-dashed border-brand-line px-4 py-12 text-center text-sm text-brand-muted">No transactions yet.</p>;
+  }
+  const isFee = (o: Order) => o.kind === "bill" || o.kind === "membership";
+  const rows = months.map((key) => {
+    const list = byMonth.get(key) ?? [];
+    const paid = list.filter((o) => o.status === "paid");
+    return {
+      key,
+      receipts: list.length,
+      fees: paid.filter(isFee).reduce((n, o) => n + o.total, 0),
+      shop: paid.filter((o) => !isFee(o)).reduce((n, o) => n + o.total, 0),
+      collected: paid.reduce((n, o) => n + o.total, 0),
+      open: list.filter(needsAction).length,
+    };
+  });
+  const totals = rows.reduce((t, r) => ({ receipts: t.receipts + r.receipts, fees: t.fees + r.fees, shop: t.shop + r.shop, collected: t.collected + r.collected }), {
+    receipts: 0,
+    fees: 0,
+    shop: 0,
+    collected: 0,
+  });
+
+  return (
+    <div className="mt-5 overflow-x-auto border border-brand-line">
+      <table className="w-full min-w-[560px] text-left text-sm">
+        <thead className="bg-brand-card text-[11px] uppercase tracking-wider text-brand-muted">
+          <tr>
+            <th className="px-4 py-3 font-semibold">Month</th>
+            <th className="px-4 py-3 text-right font-semibold">Receipts</th>
+            <th className="px-4 py-3 text-right font-semibold">Fees</th>
+            <th className="px-4 py-3 text-right font-semibold">Shop</th>
+            <th className="px-4 py-3 text-right font-semibold">Collected</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-brand-line">
+          {rows.map((r) => (
+            <tr key={r.key} onClick={() => onOpen(r.key)} className="cursor-pointer transition hover:bg-fg/[0.04]">
+              <td className="px-4 py-3">
+                <span className="flex items-center gap-2 font-semibold">
+                  <Folder className="h-4 w-4 text-brand-red" />
+                  {monthLabel(r.key)}
+                  {r.key === current && <span className="bg-brand-red px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Now</span>}
+                  {r.open > 0 && <span className="bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-black">{r.open} open</span>}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-right">{r.receipts}</td>
+              <td className="px-4 py-3 text-right">{rupees(r.fees)}</td>
+              <td className="px-4 py-3 text-right">{rupees(r.shop)}</td>
+              <td className="px-4 py-3 text-right font-display text-xl">{rupees(r.collected)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot className="border-t-2 border-brand-line bg-brand-card text-sm font-semibold">
+          <tr>
+            <td className="px-4 py-3">Total</td>
+            <td className="px-4 py-3 text-right">{totals.receipts}</td>
+            <td className="px-4 py-3 text-right">{rupees(totals.fees)}</td>
+            <td className="px-4 py-3 text-right">{rupees(totals.shop)}</td>
+            <td className="px-4 py-3 text-right font-display text-xl">{rupees(totals.collected)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   );
 }

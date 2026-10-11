@@ -3,11 +3,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ChevronDown,
   ClipboardList,
   ExternalLink,
   Images,
-  LayoutTemplate,
   Inbox,
+  LayoutTemplate,
   LogOut,
   Megaphone,
   MoreHorizontal,
@@ -21,32 +22,44 @@ import { createClient } from "@/lib/supabase/client";
 import { useClickOutside } from "@/lib/useClickOutside";
 
 type Counts = { joins: number; messages: number; orders: number };
+type NavLink = { href: string; label: string; short: string; Icon: typeof Inbox; badge?: keyof Counts };
 
-const links: { href: string; label: string; short: string; Icon: typeof Inbox; badge?: keyof Counts; primary?: boolean }[] = [
-  { href: "/admin/join-requests", label: "Join Requests", short: "Joins", Icon: ClipboardList, badge: "joins", primary: true },
-  { href: "/admin/messages", label: "Messages", short: "Inbox", Icon: Inbox, badge: "messages", primary: true },
-  { href: "/admin/transactions", label: "Transactions", short: "Orders", Icon: ReceiptIndianRupee, badge: "orders", primary: true },
-  { href: "/admin/products", label: "Products", short: "Products", Icon: ShoppingBag, primary: true },
+/** Always visible in the navbar. */
+const mainLinks: NavLink[] = [
+  { href: "/admin/join-requests", label: "Join Requests", short: "Joins", Icon: ClipboardList, badge: "joins" },
+  { href: "/admin/transactions", label: "Transactions", short: "Transactions", Icon: ReceiptIndianRupee, badge: "orders" },
+  { href: "/admin/products", label: "Products", short: "Products", Icon: ShoppingBag },
+  { href: "/admin/members", label: "Active Members", short: "Members", Icon: Users },
+];
+
+/** Inside the "More" dropdown. */
+const moreLinks: NavLink[] = [
+  { href: "/admin/messages", label: "Inbox", short: "Inbox", Icon: Inbox, badge: "messages" },
   { href: "/admin/gallery", label: "Gallery", short: "Gallery", Icon: Images },
   { href: "/admin/announcements", label: "Announcements", short: "Announce", Icon: Megaphone },
-  { href: "/admin/members", label: "Active Members", short: "Members", Icon: Users },
   { href: "/admin/content", label: "Website", short: "Website", Icon: LayoutTemplate },
 ];
 
-/** Admin-only navigation: top bar on desktop, bottom tab bar (+ "More") on phones. */
+/** Admin-only navigation: top bar with a "More" dropdown on desktop, bottom tab bar on phones. */
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useAuth();
   const [counts, setCounts] = useState<Counts>({ joins: 0, messages: 0, orders: 0 });
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLLIElement>(null);
-  const closeMore = useCallback(() => setMoreOpen(false), []);
-  useClickOutside(moreRef, moreOpen, closeMore);
+  // Separate states: each menu closes on clicks outside itself only.
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const desktopMore = useRef<HTMLDivElement>(null);
+  const mobileMore = useRef<HTMLLIElement>(null);
+  const closeDesktop = useCallback(() => setDesktopOpen(false), []);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  useClickOutside(desktopMore, desktopOpen, closeDesktop);
+  useClickOutside(mobileMore, mobileOpen, closeMobile);
 
   // Refresh the badges whenever the admin moves between pages.
   useEffect(() => {
-    setMoreOpen(false);
+    setDesktopOpen(false);
+    setMobileOpen(false);
     const supabase = createClient();
     Promise.all([
       supabase.from("join_requests").select("id", { count: "exact", head: true }).or("status.eq.new,payment_status.eq.verifying"),
@@ -64,8 +77,37 @@ export default function AdminNav() {
 
   const count = (key?: keyof Counts) => (key ? counts[key] : 0);
   const badgeText = (n: number) => (n > 99 ? "99+" : n);
-  const secondary = links.filter((l) => !l.primary);
-  const secondaryActive = secondary.some((l) => pathname.startsWith(l.href));
+  const moreActive = moreLinks.some((l) => pathname.startsWith(l.href));
+  const moreCount = moreLinks.reduce((n, l) => n + count(l.badge), 0);
+
+  const Badge = ({ n, small = false }: { n: number; small?: boolean }) =>
+    n > 0 ? (
+      <span
+        className={`flex items-center justify-center rounded-full bg-brand-red font-bold text-white ${
+          small ? "h-4 min-w-4 px-1 text-[9px]" : "h-5 min-w-5 px-1 text-[10px]"
+        }`}
+      >
+        {badgeText(n)}
+      </span>
+    ) : null;
+
+  const dropdown = (className: string) => (
+    <div className={`w-56 border border-brand-line bg-brand-card py-1 shadow-2xl ${className}`}>
+      {moreLinks.map(({ href, label, Icon, badge }) => (
+        <Link
+          key={href}
+          href={href}
+          className={`flex items-center gap-3 px-4 py-3 text-sm transition ${
+            pathname.startsWith(href) ? "bg-brand-red/10 text-brand-red" : "text-fg/80 hover:bg-fg/5 hover:text-fg"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+          <span className="flex-1">{label}</span>
+          <Badge n={count(badge)} />
+        </Link>
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -78,32 +120,42 @@ export default function AdminNav() {
             <span className="bg-brand-red px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">Admin</span>
           </Link>
 
-          <ul className="hidden items-center gap-0.5 lg:flex">
-            {links.map(({ href, label, short, Icon, badge }) => {
+          <div className="hidden items-center gap-1 lg:flex">
+            {mainLinks.map(({ href, label, short, Icon, badge }) => {
               const active = pathname.startsWith(href);
-              const n = count(badge);
               return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    title={label}
-                    className={`flex items-center gap-1.5 rounded-sm px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wider transition xl:text-xs ${
-                      active ? "bg-brand-red text-white" : "text-fg/70 hover:bg-fg/5 hover:text-fg"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {/* icons only on small laptops (name in the tooltip), short names on wider screens */}
-                    <span className="hidden xl:inline">{short}</span>
-                    {!active && n > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-bold text-white">
-                        {badgeText(n)}
-                      </span>
-                    )}
-                  </Link>
-                </li>
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                    active ? "bg-brand-red text-white" : "text-fg/70 hover:bg-fg/5 hover:text-fg"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="xl:hidden">{short}</span>
+                  <span className="hidden xl:inline">{label}</span>
+                  {!active && <Badge n={count(badge)} />}
+                </Link>
               );
             })}
-          </ul>
+
+            <div ref={desktopMore} className="relative">
+              <button
+                onClick={() => setDesktopOpen(!desktopOpen)}
+                aria-expanded={desktopOpen}
+                aria-haspopup="menu"
+                className={`flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+                  moreActive ? "bg-brand-red text-white" : "text-fg/70 hover:bg-fg/5 hover:text-fg"
+                }`}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                More
+                {!moreActive && <Badge n={moreCount} />}
+                <ChevronDown className={`h-3.5 w-3.5 transition ${desktopOpen ? "rotate-180" : ""}`} />
+              </button>
+              {desktopOpen && dropdown("absolute right-0 top-full mt-2")}
+            </div>
+          </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
@@ -122,59 +174,48 @@ export default function AdminNav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-line bg-brand-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden print:hidden"
       >
         <ul className="grid grid-cols-5">
-          {links
-            .filter((l) => l.primary)
-            .map(({ href, short, Icon, badge }) => {
-              const active = pathname.startsWith(href);
-              const n = count(badge);
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider transition ${
-                      active ? "text-brand-red" : "text-fg/60"
-                    }`}
-                  >
-                    {active && <span className="absolute inset-x-3 top-0 h-0.5 bg-brand-red" />}
-                    <Icon className="h-5 w-5" />
-                    {short}
-                    {n > 0 && (
-                      <span className="absolute right-[18%] top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-red px-1 text-[9px] font-bold text-white">
-                        {badgeText(n)}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+          {mainLinks.map(({ href, short, Icon, badge }) => {
+            const active = pathname.startsWith(href);
+            const n = count(badge);
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-normal transition ${
+                    active ? "text-brand-red" : "text-fg/60"
+                  }`}
+                >
+                  {active && <span className="absolute inset-x-3 top-0 h-0.5 bg-brand-red" />}
+                  <Icon className="h-5 w-5" />
+                  {short}
+                  {n > 0 && (
+                    <span className="absolute right-[14%] top-2">
+                      <Badge n={n} small />
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
 
-          <li ref={moreRef} className="relative">
+          <li ref={mobileMore} className="relative">
             <button
-              onClick={() => setMoreOpen(!moreOpen)}
-              aria-expanded={moreOpen}
-              className={`relative flex h-16 w-full flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider ${
-                secondaryActive || moreOpen ? "text-brand-red" : "text-fg/60"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-expanded={mobileOpen}
+              className={`relative flex h-16 w-full flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-normal ${
+                moreActive || mobileOpen ? "text-brand-red" : "text-fg/60"
               }`}
             >
-              {secondaryActive && <span className="absolute inset-x-3 top-0 h-0.5 bg-brand-red" />}
+              {moreActive && <span className="absolute inset-x-3 top-0 h-0.5 bg-brand-red" />}
               <MoreHorizontal className="h-5 w-5" />
               More
+              {moreCount > 0 && (
+                <span className="absolute right-[14%] top-2">
+                  <Badge n={moreCount} small />
+                </span>
+              )}
             </button>
-            {moreOpen && (
-              <div className="absolute bottom-full right-2 mb-2 w-52 border border-brand-line bg-brand-card py-1 shadow-2xl">
-                {secondary.map(({ href, label, Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm ${
-                      pathname.startsWith(href) ? "text-brand-red" : "text-fg/80 hover:bg-fg/5"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" /> {label}
-                  </Link>
-                ))}
-              </div>
-            )}
+            {mobileOpen && dropdown("absolute bottom-full right-2 mb-2")}
           </li>
         </ul>
       </nav>
