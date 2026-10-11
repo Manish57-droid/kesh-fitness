@@ -426,8 +426,36 @@ function MonthTable({
   });
 
   return (
-    <div className="mt-5 overflow-x-auto border border-brand-line">
-      <table className="w-full min-w-[560px] text-left text-sm">
+    <>
+      {/* Phones: one card per month */}
+      <ul className="mt-5 space-y-2 sm:hidden">
+        {rows.map((r) => (
+          <li key={r.key}>
+            <button onClick={() => onOpen(r.key)} className="card flex w-full items-center gap-3 p-4 text-left">
+              <Folder className="h-8 w-8 shrink-0 text-brand-red" strokeWidth={1.5} />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-1.5 font-semibold">
+                  {monthLabel(r.key)}
+                  {r.key === current && <span className="bg-brand-red px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Now</span>}
+                  {r.open > 0 && <span className="bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-black">{r.open} open</span>}
+                </span>
+                <span className="block text-xs text-brand-muted">
+                  {r.receipts} receipt{r.receipts === 1 ? "" : "s"} · Fees {rupees(r.fees)} · Shop {rupees(r.shop)}
+                </span>
+              </span>
+              <span className="font-display text-2xl leading-none">{rupees(r.collected)}</span>
+            </button>
+          </li>
+        ))}
+        <li className="flex items-center justify-between border-t-2 border-brand-line px-4 pt-3 text-sm font-semibold">
+          <span>Total · {totals.receipts} receipts</span>
+          <span className="font-display text-2xl">{rupees(totals.collected)}</span>
+        </li>
+      </ul>
+
+      {/* Tablets and up: table */}
+    <div className="mt-5 hidden overflow-x-auto border border-brand-line sm:block">
+      <table className="w-full text-left text-sm">
         <thead className="bg-brand-card text-[11px] uppercase tracking-wider text-brand-muted">
           <tr>
             <th className="px-4 py-3 font-semibold">Month</th>
@@ -466,5 +494,6 @@ function MonthTable({
         </tfoot>
       </table>
     </div>
+    </>
   );
 }

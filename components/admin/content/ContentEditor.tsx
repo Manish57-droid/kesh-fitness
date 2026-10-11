@@ -341,7 +341,7 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
       </div>
 
       {/* Save bar (sits above the admin tab bar on phones) */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-brand-line bg-brand-card/95 backdrop-blur-md lg:bottom-0">
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-brand-line bg-brand-card/95 backdrop-blur-md lg:bottom-0">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <p className="min-w-0 text-sm">
             {error ? (

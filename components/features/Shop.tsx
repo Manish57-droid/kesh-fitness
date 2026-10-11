@@ -77,7 +77,7 @@ export default function Shop({ preview = false }: { preview?: boolean }) {
         {products === null ? (
           <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse bg-brand-card" />
+              <div key={i} className="aspect-[3/5] animate-pulse bg-brand-card" />
             ))}
           </div>
         ) : shown.length === 0 ? (

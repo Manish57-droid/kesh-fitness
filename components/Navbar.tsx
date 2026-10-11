@@ -10,10 +10,10 @@ import { useAuth } from "./auth/AuthProvider";
 
 const links = [
   { label: "Programs", href: "/#programs" },
-  { label: "Planner", href: "/#planner" },
   { label: "Plans", href: "/#plans" },
-  { label: "Shop", href: "/shop" },
   { label: "Join", href: "/#join" },
+  { label: "Shop", href: "/shop" },
+  { label: "Planner", href: "/#planner" },
   { label: "Contact", href: "/#contact" },
   { label: "Visit", href: "/#visit" },
 ];
