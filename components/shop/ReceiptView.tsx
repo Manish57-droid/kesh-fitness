@@ -5,7 +5,7 @@ import { ArrowLeft, Banknote, CheckCircle2, Clock, Printer, Share2, XCircle } fr
 import PaymentPanel from "./PaymentPanel";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { formatIST, rupeesInWords } from "@/lib/format";
+import { formatDay, formatIST, rupeesInWords } from "@/lib/format";
 import { payment, rupees } from "@/lib/site";
 import type { GymDetails } from "@/lib/content";
 import type { PublicOrder } from "@/lib/types";
@@ -59,9 +59,11 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
     );
   }
 
+  // Monthly bills / memberships have no items to collect.
+  const isOrder = !order.kind || order.kind === "product" || (order.items ?? []).some((l) => l.product_id);
   const awaitingUpi = order.payment_method === "upi" && order.status === "pending";
   const banner = {
-    paid: { Icon: CheckCircle2, cls: "border-emerald-600 bg-emerald-600/10 text-emerald-500", title: "Payment received", text: "Collect your order at the gym counter. Show this receipt." },
+    paid: { Icon: CheckCircle2, cls: "border-emerald-600 bg-emerald-600/10 text-emerald-500", title: "Payment received", text: isOrder ? "Collect your order at the gym counter. Show this receipt." : "Thank you! Keep this receipt for your records." },
     verifying: { Icon: Clock, cls: "border-amber-500 bg-amber-500/10 text-amber-500", title: "Payment being verified", text: `We're checking UTR ${order.utr}. This page updates by itself once confirmed.` },
     pending:
       order.payment_method === "cash"
@@ -127,6 +129,12 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
               <p className="mt-1 font-semibold">{order.payment_method === "upi" ? "UPI (online)" : "Cash at gym"}</p>
               {order.utr && <p className="text-fg/70">UTR: <span className="font-mono">{order.utr}</span></p>}
               {order.paid_at && <p className="text-fg/70">Paid on {formatIST(order.paid_at)}</p>}
+              {order.period_start && order.period_end && (
+                <p className="text-fg/70">
+                  Membership: {formatDay(order.period_start)} to {formatDay(order.period_end)}
+                  <span className="block font-semibold text-fg">Next due date: {formatDay(order.period_end)}</span>
+                </p>
+              )}
             </div>
           </section>
 
@@ -140,12 +148,17 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-brand-line">
-                <td className="py-3 pr-2 font-medium">{order.product_name}</td>
-                <td className="px-2 py-3 text-center">{order.quantity}</td>
-                <td className="px-2 py-3 text-right">{rupees(order.unit_price)}</td>
-                <td className="py-3 pl-2 text-right">{rupees(order.subtotal)}</td>
-              </tr>
+              {(order.items?.length
+                ? order.items
+                : [{ name: order.product_name, qty: order.quantity, unit_price: order.unit_price, amount: order.subtotal }]
+              ).map((line, i) => (
+                <tr key={i} className="border-b border-brand-line">
+                  <td className="py-3 pr-2 font-medium">{line.name}</td>
+                  <td className="px-2 py-3 text-center">{line.qty}</td>
+                  <td className="px-2 py-3 text-right">{rupees(line.unit_price)}</td>
+                  <td className="py-3 pl-2 text-right">{rupees(line.amount)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
@@ -167,7 +180,7 @@ export default function ReceiptView({ token, gym }: { token: string; gym: GymDet
 
           <footer className="mt-8 border-t border-dashed border-brand-line pt-4 text-center text-xs text-brand-muted">
             <p className="font-semibold text-fg/80">Thank you for shopping with {gym.name}!</p>
-            <p className="mt-1">Collect your order at the gym counter · Instagram @{gym.instagramHandle}{gym.email && ` · ${gym.email}`}</p>
+            <p className="mt-1">{isOrder ? "Collect your order at the gym counter · " : ""}Instagram @{gym.instagramHandle}{gym.email && ` · ${gym.email}`}</p>
             <p className="mt-1">This is a computer-generated receipt and does not need a signature.</p>
           </footer>
         </div>

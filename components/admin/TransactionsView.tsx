@@ -15,11 +15,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatIST } from "@/lib/format";
+import { formatDay, formatIST } from "@/lib/format";
 import { rupees } from "@/lib/site";
 import type { Order, OrderStatus } from "@/lib/types";
 
-type Filter = "all" | "verify" | "cash" | "upi_unpaid" | "paid" | "cancelled";
+type Filter = "all" | "verify" | "cash" | "upi_unpaid" | "paid" | "fees" | "shop" | "cancelled";
 type View = { kind: "month"; key: string } | { kind: "attention" };
 
 const FILTERS: { id: Filter; label: string; test: (o: Order) => boolean }[] = [
@@ -28,6 +28,8 @@ const FILTERS: { id: Filter; label: string; test: (o: Order) => boolean }[] = [
   { id: "cash", label: "Cash due", test: (o) => o.status === "pending" && o.payment_method === "cash" },
   { id: "upi_unpaid", label: "UPI unpaid", test: (o) => o.status === "pending" && o.payment_method === "upi" },
   { id: "paid", label: "Paid", test: (o) => o.status === "paid" },
+  { id: "fees", label: "Fees", test: (o) => o.kind === "bill" || o.kind === "membership" },
+  { id: "shop", label: "Shop", test: (o) => !o.kind || o.kind === "product" },
   { id: "cancelled", label: "Cancelled", test: (o) => o.status === "cancelled" },
 ];
 
@@ -123,9 +125,9 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
   };
 
   const exportCsv = () => {
-    const header = ["Receipt", "Date", "Customer", "Phone", "Product", "Qty", "Unit price", "Subtotal", "Service", "Total", "Method", "Status", "UTR", "Paid at"];
+    const header = ["Receipt", "Date", "Type", "Customer", "Phone", "Product", "Qty", "Unit price", "Subtotal", "Service", "Total", "Method", "Status", "UTR", "Paid at"];
     const rows = shown.map((o) => [
-      o.receipt_no, formatIST(o.created_at), o.customer_name, o.customer_phone, o.product_name, o.quantity,
+      o.receipt_no, formatIST(o.created_at), o.kind === "bill" ? "Monthly fee" : o.kind === "membership" ? "New member" : "Shop", o.customer_name, o.customer_phone, o.product_name, o.quantity,
       o.unit_price, o.subtotal, o.service_charge, o.total, o.payment_method, o.status, o.utr ?? "", o.paid_at ? formatIST(o.paid_at) : "",
     ]);
     const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -307,9 +309,15 @@ function OrderCard({
 
       <div className="mt-3 flex items-end justify-between gap-3">
         <div className="min-w-0 text-sm">
-          <p className="truncate font-semibold">
-            {o.product_name} × {o.quantity}
+          <p className="flex items-center gap-2 font-semibold">
+            {o.kind && o.kind !== "product" && (
+              <span className="shrink-0 bg-brand-red/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-red">
+                {o.kind === "membership" ? "New member" : "Monthly fee"}
+              </span>
+            )}
+            <span className="truncate">{o.items?.length ? o.product_name : `${o.product_name} × ${o.quantity}`}</span>
           </p>
+          {o.period_end && <p className="text-[11px] text-brand-muted">Next due {formatDay(o.period_end)}</p>}
           <p className="truncate text-fg/70">{o.customer_name}</p>
         </div>
         <div className="text-right">

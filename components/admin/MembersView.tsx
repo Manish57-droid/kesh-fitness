@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Database, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, UserX, UserCheck } from "lucide-react";
+import { CheckCircle2, Database, ExternalLink, ReceiptIndianRupee, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, UserX, UserCheck } from "lucide-react";
+import BillDialog from "./BillDialog";
 import MemberForm from "./MemberForm";
 import { whatsappLink } from "./MessagesView";
 import { createClient } from "@/lib/supabase/client";
-import { addMonths, daysBetween, formatDay, todayISO } from "@/lib/format";
+import { daysBetween, formatDay, todayISO } from "@/lib/format";
 import { rupees } from "@/lib/site";
 import type { PlanContent } from "@/lib/content";
 import type { JoinRequest, Member } from "@/lib/types";
@@ -26,6 +27,8 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Member | "new" | null>(fromRequest ? "new" : null);
   const [error, setError] = useState("");
+  const [billing, setBilling] = useState<Member | null>(null);
+  const [lastBill, setLastBill] = useState<{ name: string; token: string; receiptNo: string; due: string | null } | null>(null);
   // Fee status depends on the viewer's date, so it's only computed in the browser.
   const [today, setToday] = useState<string | null>(null);
   useEffect(() => setToday(todayISO()), []);
@@ -81,12 +84,6 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
     const { data, error } = await createClient().from("members").update(changes).eq("id", m.id).select().single();
     if (error) return setError(error.message);
     replace(data as Member);
-  };
-
-  // Extends fees by one month from the later of today and the current paid-until date.
-  const addMonthPaid = (m: Member) => {
-    const base = today && (!m.paid_until || m.paid_until < today) ? today : m.paid_until ?? todayISO();
-    patch(m, { paid_until: addMonths(base, 1) });
   };
 
   const remove = async (m: Member) => {
@@ -151,6 +148,19 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
         </div>
       </div>
       {error && <p className="mt-3 text-sm text-brand-red">{error}</p>}
+      {lastBill && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 border-l-4 border-emerald-600 bg-emerald-600/10 p-3 text-sm">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+          <span className="flex-1">
+            Bill {lastBill.receiptNo} saved for {lastBill.name}
+            {lastBill.due && <> · next due {formatDay(lastBill.due)}</>}. It's in Transactions.
+          </span>
+          <a href={`/receipt/${lastBill.token}`} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
+            <ExternalLink className="h-3.5 w-3.5" /> Receipt
+          </a>
+          <button onClick={() => setLastBill(null)} className="text-xs text-brand-muted hover:text-fg">Dismiss</button>
+        </div>
+      )}
 
       {shown.length === 0 ? (
         <p className="mt-6 border border-dashed border-brand-line px-4 py-12 text-center text-sm text-brand-muted">
@@ -209,11 +219,9 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
                   <a href={whatsappLink(m.phone)} target="_blank" rel="noreferrer" className="btn-ghost btn-sm">
                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                   </a>
-                  {m.is_active && (
-                    <button onClick={() => addMonthPaid(m)} className="btn-ghost btn-sm" title="Extend fees paid by one month">
-                      <CalendarPlus className="h-3.5 w-3.5" /> +1 month paid
-                    </button>
-                  )}
+                  <button onClick={() => setBilling(m)} className="btn-primary btn-sm" title="Record a monthly fee payment (and products)">
+                    <ReceiptIndianRupee className="h-3.5 w-3.5" /> Renew / Bill
+                  </button>
                   <button onClick={() => patch(m, { is_active: !m.is_active })} className="btn-ghost btn-sm">
                     {m.is_active ? <UserX className="h-3.5 w-3.5" /> : <UserCheck className="h-3.5 w-3.5" />}
                     {m.is_active ? "Mark inactive" : "Mark active"}
@@ -223,6 +231,19 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
             );
           })}
         </ul>
+      )}
+
+      {billing && (
+        <BillDialog
+          member={billing}
+          plans={plans}
+          onClose={() => setBilling(null)}
+          onSaved={(saved, receipt) => {
+            replace(saved);
+            setBilling(null);
+            setLastBill({ name: saved.name, due: saved.paid_until, ...receipt });
+          }}
+        />
       )}
 
       {editing && (

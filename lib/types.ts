@@ -135,7 +135,16 @@ export type Order = {
   paid_at: string | null;
   created_at: string;
   updated_at: string;
+  // Bills and memberships (migration 009). Plain shop orders have kind "product" and no items.
+  kind?: OrderKind;
+  member_id?: number | null;
+  items?: OrderItem[] | null;
+  period_start?: string | null;
+  period_end?: string | null;
 };
+
+export type OrderKind = "product" | "bill" | "membership";
+export type OrderItem = { name: string; qty: number; unit_price: number; amount: number; product_id?: number };
 
 /** A customer's own order, as returned by get_order(token). */
 export type PublicOrder = Omit<Order, "id" | "token" | "product_id" | "updated_at">;

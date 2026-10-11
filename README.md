@@ -23,7 +23,7 @@ The site and the workout planner work without any setup. The join form, message 
 - Paste the whole of [`supabase/schema.sql`](supabase/schema.sql) and click *Run*. It should say "Success. No rows returned".
 - This creates: `profiles` (admin role), `join_requests`, `messages`, `notifications`, `products`, a public `products` storage bucket for product photos, the security rules, and live updates for announcements.
 - Safe to run again whenever the file changes.
-- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity, `004_orders_gallery.sql` adds shop orders/payments and the admin photo gallery, `005_unlimited_stock.sql` turns off stock limits, `006_site_content.sql` lets the admin edit the website, `007_join_payments.sql` adds pay-to-join and Personal Training, `008_gym_location.sql` sets the exact gym location). Each file only contains new changes, so you never need to re-run old ones.
+- Then run each file in [`supabase/migrations/`](supabase/migrations/) **in number order** the same way (`002_members.sql` adds Active Members, `003_product_quantity.sql` adds stock quantity, `004_orders_gallery.sql` adds shop orders/payments and the admin photo gallery, `005_unlimited_stock.sql` turns off stock limits, `006_site_content.sql` lets the admin edit the website, `007_join_payments.sql` adds pay-to-join and Personal Training, `008_gym_location.sql` sets the exact gym location, `009_member_billing.sql` adds monthly bills for members). Each file only contains new changes, so you never need to re-run old ones.
 
 **3. Connect the website**
 - Left sidebar → *Project Settings* → *API* (or *API Keys*).
@@ -67,7 +67,7 @@ The site and the workout planner work without any setup. The join form, message 
 | Announcement bell + live pop-ups | ✓ | ✓ |
 | Shop page: order with quantity, pay by UPI or cash, get a receipt | ✓ | ✓ |
 | Admin Panel (`/admin`): join requests, messages, replies, call / WhatsApp | | ✓ |
-| Active Members: details, fees-paid tracking, active / inactive | | ✓ |
+| Active Members: details, fees-paid tracking, active / inactive, Renew / Bill (monthly fee + products) | | ✓ |
 | Add, edit, hide and delete products (with photos), mark in / out of stock | | ✓ |
 | Transactions: confirm UPI payments (check UTR), mark cash received, cancel, export CSV | | ✓ |
 | Gallery: upload, caption, reorder, hide and delete slideshow photos | | ✓ |
