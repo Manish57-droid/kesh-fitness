@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Banknote, ClipboardList, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import { Banknote, CheckCircle2, ClipboardList, Loader2, ShieldCheck, Smartphone, UserCheck } from "lucide-react";
 import DumbbellArt from "../DumbbellArt";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -9,7 +9,7 @@ import { PLAN_EVENT } from "@/lib/events";
 import { KEYS, readJSON, writeJSON } from "@/lib/storage";
 import { MOBILE_ERROR, normalizeMobile } from "@/lib/validate";
 import { useNow } from "@/lib/useNow";
-import { formatIST } from "@/lib/format";
+import { formatIST, todayISO } from "@/lib/format";
 import { rupees, type PlanId } from "@/lib/site";
 import type { SiteContent } from "@/lib/content";
 import type { PaymentMethod } from "@/lib/types";
@@ -28,6 +28,9 @@ const empty = {
   area: "",
   notes: "",
   method: "upi" as PaymentMethod,
+  /** Already trains at the gym: no fees, goes straight to the members list. */
+  existing: false,
+  joinedOn: "",
 };
 
 export type SavedJoin = { token: string; receiptNo: string };
@@ -41,11 +44,12 @@ export default function JoinForm({ plans, gymName }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [phoneError, setPhoneError] = useState("");
+  const [registered, setRegistered] = useState("");
   const now = useNow();
 
   // "Join with …" buttons in the Plans section pre-select a plan.
   useEffect(() => {
-    const onPlan = (e: Event) => setForm((f) => ({ ...f, plan: (e as CustomEvent<PlanId>).detail }));
+    const onPlan = (e: Event) => setForm((f) => ({ ...f, plan: (e as CustomEvent<PlanId>).detail, existing: false }));
     window.addEventListener(PLAN_EVENT, onPlan);
     return () => window.removeEventListener(PLAN_EVENT, onPlan);
   }, []);
@@ -66,6 +70,7 @@ export default function JoinForm({ plans, gymName }: Props) {
     }
     setBusy(true);
     setError("");
+    if (form.existing) return submitExisting(phone);
     const { data, error } = await createClient()
       .rpc("submit_join_request", {
         p_name: form.name,
@@ -95,7 +100,29 @@ export default function JoinForm({ plans, gymName }: Props) {
     router.push(`/join/${data.token}`);
   };
 
-  const methodOption = (id: PaymentMethod, label: string, hint: string, Icon: typeof Smartphone) => (
+  const submitExisting = async (phone: string) => {
+    const { error } = await createClient().rpc("submit_existing_member", {
+      p_name: form.name,
+      p_phone: phone,
+      p_email: form.email,
+      p_age: form.age ? Number(form.age) : null,
+      p_gender: form.gender,
+      p_plan: form.plan,
+      p_area: form.area,
+      p_joined_on: form.joinedOn || null,
+      p_notes: form.notes,
+    });
+    setBusy(false);
+    if (error) {
+      return setError(
+        error.code === "PGRST202" ? "Online sign-up isn't available yet. Please visit the gym." : error.message || "Couldn't submit the form. Please try again."
+      );
+    }
+    setRegistered(form.name.trim());
+    setForm(empty);
+  };
+
+  const methodOption =(id: PaymentMethod, label: string, hint: string, Icon: typeof Smartphone) => (
     <label
       className={`flex cursor-pointer items-start gap-3 border p-3 transition ${
         form.method === id ? "border-brand-red bg-brand-red/[0.08]" : "border-brand-line hover:border-fg/40"
@@ -142,9 +169,30 @@ export default function JoinForm({ plans, gymName }: Props) {
               <span className="font-semibold">{rupees(plans.joiningFee)}</span>
             </p>
           </div>
+          {plans.existingMembers && (
+          <p className="mt-6 flex items-start gap-2 border-l-2 border-brand-red bg-fg/5 px-3 py-2 text-sm text-fg/80">
+            <UserCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-red" />
+            <span>
+              Already training with us? Choose <span className="font-semibold">Already a member</span> in the form and fill in your
+              details. There&apos;s nothing to pay.
+            </span>
+          </p>
+          )}
           <DumbbellArt className="mt-16 hidden w-72 -rotate-[18deg] text-brand-red/20 lg:block" />
         </div>
 
+        {registered ? (
+          <div className="card flex flex-col items-center justify-center p-6 text-center sm:p-10">
+            <CheckCircle2 className="h-12 w-12 text-emerald-500" strokeWidth={1.5} />
+            <p className="mt-4 font-display text-3xl tracking-wide">You&apos;re on the list</p>
+            <p className="mt-2 max-w-sm text-sm text-fg/70">
+              Thanks, {registered}. Your details are saved with the {gymName} team. Keep paying your monthly fees at the gym as usual.
+            </p>
+            <button type="button" onClick={() => setRegistered("")} className="btn-ghost btn-sm mt-6">
+              Fill another form
+            </button>
+          </div>
+        ) : (
         <form onSubmit={submit} className="card space-y-4 p-4 sm:p-6">
           <div className="flex items-center gap-3 border-b border-brand-line pb-4">
             <ClipboardList className="h-5 w-5 text-brand-red" />
@@ -202,46 +250,93 @@ export default function JoinForm({ plans, gymName }: Props) {
 
           <div>
             <p className="label">Plan *</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className={`grid gap-2 ${plans.existingMembers ? "grid-cols-2" : "sm:grid-cols-3"}`}>
               {plans.items.map((p) => (
                 <label
                   key={p.id}
                   className={`cursor-pointer border p-3 transition ${
-                    form.plan === p.id ? "border-brand-red bg-brand-red/[0.08]" : "border-brand-line hover:border-fg/40"
+                    !form.existing && form.plan === p.id ? "border-brand-red bg-brand-red/[0.08]" : "border-brand-line hover:border-fg/40"
                   }`}
                 >
-                  <input type="radio" name="plan" value={p.id} checked={form.plan === p.id} onChange={set("plan")} className="sr-only" />
+                  <input
+                    type="radio"
+                    name="plan"
+                    value={p.id}
+                    checked={!form.existing && form.plan === p.id}
+                    onChange={() => setForm({ ...form, plan: p.id, existing: false })}
+                    className="sr-only"
+                  />
                   <span className="block text-sm font-semibold">{p.name}</span>
                   <span className="block text-xs text-brand-muted">{rupees(p.monthly)} / month</span>
                 </label>
               ))}
+              {plans.existingMembers && (
+              <label
+                className={`cursor-pointer border p-3 transition ${
+                  form.existing ? "border-brand-red bg-brand-red/[0.08]" : "border-dashed border-brand-line hover:border-fg/40"
+                }`}
+              >
+                <input type="radio" name="plan" value="existing" checked={form.existing} onChange={() => setForm({ ...form, existing: true })} className="sr-only" />
+                <span className="flex items-center gap-1.5 text-sm font-semibold">
+                  <UserCheck className="h-3.5 w-3.5 shrink-0 text-brand-red" /> Already a member
+                </span>
+                <span className="block text-xs text-brand-muted">No fees, just your details</span>
+              </label>
+              )}
             </div>
           </div>
 
+          {form.existing && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="j-current-plan" className="label">Your current plan *</label>
+                <select id="j-current-plan" className="input" value={form.plan} onChange={set("plan")} required>
+                  {plans.items.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="j-joined-on" className="label">Member since</label>
+                <input id="j-joined-on" type="date" className="input" value={form.joinedOn} onChange={set("joinedOn")} min="2000-01-01" max={todayISO()} />
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="j-timing" className="label">Preferred timing</label>
-              <select id="j-timing" className="input" value={form.timing} onChange={set("timing")}>
-                <option value="">Any time</option>
-                <option value="morning">Morning</option>
-                <option value="evening">Evening</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="j-goal" className="label">Fitness goal</label>
-              <select id="j-goal" className="input" value={form.goal} onChange={set("goal")}>
-                <option value="">Select a goal</option>
-                {goals.map((g) => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
+            {!form.existing && (
+              <>
+                <div>
+                  <label htmlFor="j-timing" className="label">Preferred timing</label>
+                  <select id="j-timing" className="input" value={form.timing} onChange={set("timing")}>
+                    <option value="">Any time</option>
+                    <option value="morning">Morning</option>
+                    <option value="evening">Evening</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="j-goal" className="label">Fitness goal</label>
+                  <select id="j-goal" className="input" value={form.goal} onChange={set("goal")}>
+                    <option value="">Select a goal</option>
+                    {goals.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
             <div className="sm:col-span-2">
               <label htmlFor="j-notes" className="label">Health issues or anything we should know</label>
               <textarea id="j-notes" rows={2} className="input resize-y" value={form.notes} onChange={set("notes")} maxLength={500} />
             </div>
           </div>
 
+          {form.existing ? (
+            <p className="border border-brand-line bg-brand-black/40 p-4 text-sm text-fg/80">
+              Nothing to pay now. You&apos;ll be added to the members list and keep paying your monthly fees at the gym as usual.
+            </p>
+          ) : (
+          <>
           <div>
             <p className="label">How will you pay? *</p>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -268,16 +363,19 @@ export default function JoinForm({ plans, gymName }: Props) {
               <span className="font-display text-3xl leading-none">{rupees(total)}</span>
             </p>
           </div>
+          </>
+          )}
 
           {error && <p className="text-sm text-brand-red">{error}</p>}
           <button type="submit" disabled={busy} className="btn-primary w-full">
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-            {form.method === "upi" ? `Continue to pay ${rupees(total)}` : "Submit (pay cash at gym)"}
+            {form.existing ? "Submit my details" : form.method === "upi" ? `Continue to pay ${rupees(total)}` : "Submit (pay cash at gym)"}
           </button>
           <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-brand-muted">
             <ShieldCheck className="h-3.5 w-3.5" /> Your details are only seen by the {gymName} team.
           </p>
         </form>
+        )}
       </div>
     </section>
   );

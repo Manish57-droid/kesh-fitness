@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Download,
   ExternalLink,
+  FileText,
   Folder,
   Phone,
   RefreshCw,
@@ -15,7 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatDay, formatIST } from "@/lib/format";
+import { KEEP_MONTHS, formatDay, formatIST, keepFromMonth, monthKey, monthLabel, shiftMonth } from "@/lib/format";
 import { rupees } from "@/lib/site";
 import type { Order, OrderStatus } from "@/lib/types";
 
@@ -44,13 +45,6 @@ const POLL_MS = 30_000;
 const needsAction = (o: Order) => o.status === "verifying" || (o.status === "pending" && o.payment_method === "cash");
 const sumPaid = (list: Order[]) => list.filter((o) => o.status === "paid").reduce((n, o) => n + o.total, 0);
 
-/** "2026-10" for a timestamp, in India time. */
-const monthKey = (iso: string | Date) =>
-  new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit" }).slice(0, 7);
-const monthLabel = (key: string) => {
-  const [y, m] = key.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-};
 
 export default function TransactionsView({ initial }: { initial: Order[] }) {
   const [orders, setOrders] = useState(initial);
@@ -83,6 +77,9 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
   }
   const pastMonths = Array.from(byMonth.keys()).filter((k) => k < current).sort().reverse();
   const attention = orders.filter(needsAction);
+  // The oldest kept month is deleted when the next month starts; remind the admin to download it.
+  const oldest = keepFromMonth(current);
+  const oldestCount = byMonth.get(oldest)?.length ?? 0;
 
   const q = query.trim().toLowerCase();
   const searching = q.length > 0;
@@ -180,6 +177,22 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
         </button>
       )}
 
+      {/* Oldest month is about to be deleted */}
+      {oldestCount > 0 && !searching && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 border-l-4 border-brand-red bg-brand-red/10 p-4 text-sm">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-brand-red" />
+          <span className="min-w-0 flex-1">
+            <span className="font-semibold">
+              {monthLabel(oldest)} ({oldestCount} receipt{oldestCount === 1 ? "" : "s"}) will be deleted on 1 {monthLabel(shiftMonth(current, 1))}.
+            </span>
+            <span className="block text-fg/70">Transactions are kept for {KEEP_MONTHS} months. Download its report first if you need it.</span>
+          </span>
+          <a href={`/admin/transactions/report?month=${oldest}`} className="btn-primary btn-sm shrink-0">
+            <FileText className="h-4 w-4" /> Report for {monthLabel(oldest)}
+          </a>
+        </div>
+      )}
+
       {/* This month / All months */}
       <div className="mb-5 inline-flex border border-brand-line">
         {([
@@ -226,6 +239,13 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
           <button onClick={exportCsv} className="icon-btn shrink-0" aria-label="Download CSV" title="Download CSV of this view">
             <Download className="h-4 w-4" />
           </button>
+          <a
+            href={`/admin/transactions/report?month=${view.kind === "month" ? view.key : current}`}
+            className="btn-primary btn-sm shrink-0"
+            title="Monthly report: download as PDF or Excel"
+          >
+            <FileText className="h-4 w-4" /> <span className="hidden sm:inline">Monthly report</span><span className="sm:hidden">Report</span>
+          </a>
         </div>
       </div>
 

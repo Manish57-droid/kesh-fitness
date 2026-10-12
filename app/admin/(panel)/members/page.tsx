@@ -25,6 +25,8 @@ export default async function MembersPage({ searchParams }: { searchParams: { fr
         initial={(members.data as Member[]) ?? []}
         fromRequest={(fromRequest.data as JoinRequest | null) ?? null}
         plans={plans.items}
+        joiningFee={plans.joiningFee}
+        existingSignup={plans.existingMembers}
         tableMissing={members.error?.code === "42P01" || members.error?.code === "PGRST205"}
       />
     </>

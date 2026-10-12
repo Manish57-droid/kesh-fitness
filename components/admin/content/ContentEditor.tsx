@@ -203,7 +203,19 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
                   </div>
                 )}
               />
-              <ImageField label="Photo" value={draft.about.image} defaultValue={d.about.image} onChange={(v) => patch("about", { image: v })} />
+              <ImageField label="Main photo" value={draft.about.image} defaultValue={d.about.image} onChange={(v) => patch("about", { image: v })} />
+              <List
+                label="More photos (slideshow)"
+                items={draft.about.images}
+                onChange={(v) => patch("about", { images: v })}
+                newItem={() => ""}
+                max={12}
+                addLabel="Add photo"
+                render={(src, setSrc, i) => <ImageField label={`Photo ${i + 2}`} value={src} onChange={setSrc} />}
+              />
+              <p className="-mt-2 text-xs text-brand-muted">
+                With more photos added, the About picture changes every 3 seconds, starting with the main photo.
+              </p>
             </>
           )}
 
@@ -380,7 +392,12 @@ function tidy(c: SiteContent): SiteContent {
     ...c,
     gym: { ...c.gym, hours: c.gym.hours.filter((h) => h.days.trim()).map((h) => ({ days: h.days.trim(), slots: lines(h.slots) })) },
     marquee: lines(c.marquee),
-    about: { ...c.about, paragraphs: lines(c.about.paragraphs), stats: c.about.stats.filter((s) => s.value.trim() || s.label.trim()) },
+    about: {
+      ...c.about,
+      paragraphs: lines(c.about.paragraphs),
+      stats: c.about.stats.filter((s) => s.value.trim() || s.label.trim()),
+      images: c.about.images.filter(Boolean),
+    },
     programs: { ...c.programs, items: c.programs.items.filter((p) => p.title.trim()) },
     coach: { ...c.coach, paragraphs: lines(c.coach.paragraphs) },
     plans: {

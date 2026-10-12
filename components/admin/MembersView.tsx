@@ -1,26 +1,29 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Database, ExternalLink, ReceiptIndianRupee, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, UserX, UserCheck } from "lucide-react";
+import { CheckCircle2, Database, ExternalLink, Globe, Loader2, ReceiptIndianRupee, MapPin, MessageCircle, Pencil, Phone, Plus, Search, Trash2, UserX, UserCheck } from "lucide-react";
 import BillDialog from "./BillDialog";
 import MemberForm from "./MemberForm";
 import { whatsappLink } from "./MessagesView";
 import { createClient } from "@/lib/supabase/client";
-import { daysBetween, formatDay, todayISO } from "@/lib/format";
+import { daysBetween, formatDay, pendingMonths, todayISO } from "@/lib/format";
 import { rupees } from "@/lib/site";
 import type { PlanContent } from "@/lib/content";
 import type { JoinRequest, Member } from "@/lib/types";
 
-type Filter = "active" | "due" | "inactive" | "all";
+type Filter = "active" | "due" | "online" | "inactive" | "all";
 
 type Props = {
   initial: Member[];
   fromRequest: JoinRequest | null;
   tableMissing: boolean;
   plans: PlanContent[];
+  joiningFee: number;
+  /** Join form's "Already a member" option is on. */
+  existingSignup: boolean;
 };
 
-export default function MembersView({ initial, fromRequest, tableMissing, plans }: Props) {
+export default function MembersView({ initial, fromRequest, tableMissing, plans, joiningFee, existingSignup }: Props) {
   const router = useRouter();
   const [members, setMembers] = useState(initial);
   const [filter, setFilter] = useState<Filter>("active");
@@ -28,6 +31,8 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
   const [editing, setEditing] = useState<Member | "new" | null>(fromRequest ? "new" : null);
   const [error, setError] = useState("");
   const [billing, setBilling] = useState<Member | null>(null);
+  const [signupOpen, setSignupOpen] = useState(existingSignup);
+  const [signupBusy, setSignupBusy] = useState(false);
   const [lastBill, setLastBill] = useState<{ name: string; token: string; receiptNo: string; due: string | null } | null>(null);
   // Fee status depends on the viewer's date, so it's only computed in the browser.
   const [today, setToday] = useState<string | null>(null);
@@ -57,6 +62,7 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
   const counts = {
     active: active.length,
     due: active.filter(isDue).length,
+    online: members.filter((m) => m.self_registered).length,
     inactive: members.length - active.length,
     all: members.length,
   };
@@ -67,7 +73,8 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
       filter === "all" ||
       (filter === "active" && m.is_active) ||
       (filter === "inactive" && !m.is_active) ||
-      (filter === "due" && m.is_active && isDue(m));
+      (filter === "due" && m.is_active && isDue(m)) ||
+      (filter === "online" && m.self_registered);
     const byQuery =
       !q || m.name.toLowerCase().includes(q) || m.phone.includes(q) || m.address.toLowerCase().includes(q);
     return byFilter && byQuery;
@@ -94,6 +101,24 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
     setMembers(members.filter((x) => x.id !== m.id));
   };
 
+  const toggleSignup = async () => {
+    const next = !signupOpen;
+    if (!next && !confirm("Turn off \"Already a member\" on the join form? New members can still join and pay as usual.")) return;
+    setSignupBusy(true);
+    setError("");
+    const { error } = await createClient().rpc("admin_set_existing_signup", { p_open: next });
+    if (error) {
+      setSignupBusy(false);
+      return setError(
+        error.code === "PGRST202" ? "This switch isn't set up yet. Run supabase/migrations/011_signup_switch_retention.sql in the SQL Editor." : error.message
+      );
+    }
+    // Refresh the cached website so the join form changes right away.
+    await fetch("/api/revalidate", { method: "POST" }).catch(() => {});
+    setSignupOpen(next);
+    setSignupBusy(false);
+  };
+
   const closeForm = () => {
     setEditing(null);
     // Drop ?from=… so a refresh doesn't reopen the pre-filled form.
@@ -102,8 +127,19 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
 
   const feeBadge = (m: Member) => {
     const d = dueIn(m);
-    if (d === null) return null;
-    if (d < 0) return <span className="bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Fees due · {-d}d late</span>;
+    if (d === null) {
+      return m.self_registered ? (
+        <span className="bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">Fees not set</span>
+      ) : null;
+    }
+    if (d < 0) {
+      const months = today && m.paid_until ? pendingMonths(m.paid_until, today) : 1;
+      return (
+        <span className="bg-brand-red px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+          {months > 1 ? `${months} months due` : "Fees due"} · {-d}d late
+        </span>
+      );
+    }
     if (d <= 5) return <span className="bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">Due in {d}d</span>;
     return <span className="bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Paid</span>;
   };
@@ -123,9 +159,38 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
         ))}
       </div>
 
+      <div className={`mt-3 flex items-center gap-3 border p-3 sm:p-4 ${signupOpen ? "border-emerald-600/60" : "border-brand-line"}`}>
+        <Globe className={`h-5 w-5 shrink-0 ${signupOpen ? "text-emerald-500" : "text-brand-muted"}`} />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">
+            &ldquo;Already a member&rdquo; sign-up · <span className={signupOpen ? "text-emerald-500" : "text-brand-muted"}>{signupOpen ? "On" : "Off"}</span>
+          </p>
+          <p className="text-xs text-brand-muted">
+            {signupOpen
+              ? "Existing members can add themselves from the join form, without paying. Turn off once everyone has signed up or if you see fake entries."
+              : "Hidden on the join form. Only new members (who pay) can join online."}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={signupOpen}
+          aria-label="Already a member sign-up"
+          onClick={toggleSignup}
+          disabled={signupBusy}
+          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:opacity-60 ${signupOpen ? "bg-emerald-600" : "bg-fg/20"}`}
+        >
+          {signupBusy ? (
+            <Loader2 className="mx-auto h-4 w-4 animate-spin text-white" />
+          ) : (
+            <span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${signupOpen ? "translate-x-6" : "translate-x-1"}`} />
+          )}
+        </button>
+      </div>
+
       <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          {(["active", "due", "inactive", "all"] as Filter[]).map((f) => (
+          {(["active", "due", "online", "inactive", "all"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -133,7 +198,7 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
                 filter === f ? "border-brand-red text-brand-red" : "border-brand-line text-fg/60 hover:text-fg"
               }`}
             >
-              {f === "due" ? "Fees due" : f} · {counts[f]}
+              {f === "due" ? "Fees due" : f === "online" ? "Joined online" : f} · {counts[f]}
             </button>
           ))}
         </div>
@@ -187,6 +252,9 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
                       {!m.is_active && (
                         <span className="bg-fg/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Inactive</span>
                       )}
+                      {m.self_registered && (
+                        <span className="border border-brand-line px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fg/70">Joined online</span>
+                      )}
                       {m.is_active && feeBadge(m)}
                     </div>
                   </div>
@@ -237,6 +305,8 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans 
         <BillDialog
           member={billing}
           plans={plans}
+          joiningFee={joiningFee}
+          today={today ?? todayISO()}
           onClose={() => setBilling(null)}
           onSaved={(saved, receipt) => {
             replace(saved);

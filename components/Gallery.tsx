@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Instagram, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Instagram, X } from "lucide-react";
 import Photo from "./Photo";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -18,12 +18,19 @@ const fallback: Slide[] = [
 ];
 
 const SECONDS_PER_SLIDE = 5;
-// Each half of the track must be wider than any screen, or a gap shows before it loops.
-const MIN_TILES_PER_HALF = 10;
+// Each copy of the photos must be wider than any screen, or a gap shows before it loops.
+const MIN_TILES_PER_COPY = 10;
+// After a swipe, the strip waits this long before drifting again.
+const RESUME_AFTER_MS = 2500;
 
 export default function Gallery({ instagramHandle }: { instagramHandle: string }) {
   const [slides, setSlides] = useState<Slide[]>(fallback);
   const [open, setOpen] = useState<Slide | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const resumeAt = useRef(0);
+  const hovering = useRef(false);
+  const openRef = useRef(false);
+  openRef.current = open !== null;
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -45,11 +52,77 @@ export default function Gallery({ instagramHandle }: { instagramHandle: string }
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // The track is two identical halves; it slides left by exactly one half, then restarts
-  // at the same picture, so the loop is seamless. Short lists are repeated to fill a half.
-  const repeats = Math.max(1, Math.ceil(MIN_TILES_PER_HALF / Math.max(slides.length, 1)));
-  const half = Array.from({ length: repeats }, () => slides).flat();
-  const track = [...half, ...half];
+  // The strip is a normal horizontal scroller, so phones can swipe and fling it. It holds three
+  // identical copies of the photos and stays in the middle one: drifting or swiping past either
+  // end jumps back by exactly one copy, which shows the same pictures, so it loops forever both ways.
+  // Short lists are repeated to fill a copy.
+  const repeats = Math.max(1, Math.ceil(MIN_TILES_PER_COPY / Math.max(slides.length, 1)));
+  const copy = Array.from({ length: repeats }, () => slides).flat();
+  const track = [...copy, ...copy, ...copy];
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const copyWidth = () => el.scrollWidth / 3;
+    // Float position, because browsers round scrollLeft and a slow drift would stall.
+    let pos = copyWidth();
+    el.scrollLeft = pos;
+
+    const pause = () => {
+      resumeAt.current = performance.now() + RESUME_AFTER_MS;
+    };
+    // Scrolls that didn't come from the drift are the visitor's (including a fling still moving).
+    const onScroll = () => {
+      if (Math.abs(el.scrollLeft - pos) > 2) pause();
+    };
+
+    let visible = true;
+    const observer = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
+    observer.observe(el);
+
+    let frame = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const seconds = Math.min(now - last, 100) / 1000;
+      last = now;
+      const width = copyWidth();
+      const drifting = visible && !reduceMotion && !hovering.current && !openRef.current && now >= resumeAt.current;
+      if (drifting) {
+        pos += (width / copy.length / SECONDS_PER_SLIDE) * seconds;
+        el.scrollLeft = pos;
+      } else {
+        pos = el.scrollLeft;
+      }
+      if (pos < width * 0.5 || pos >= width * 1.5) {
+        pos += pos < width * 0.5 ? width : -width;
+        el.scrollLeft = pos;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+
+    const opts = { passive: true };
+    el.addEventListener("scroll", onScroll, opts);
+    el.addEventListener("touchstart", pause, opts);
+    el.addEventListener("touchmove", pause, opts);
+    el.addEventListener("wheel", pause, opts);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("touchstart", pause);
+      el.removeEventListener("touchmove", pause);
+      el.removeEventListener("wheel", pause);
+    };
+  }, [copy.length]);
+
+  const step = (dir: -1 | 1) => {
+    const el = scroller.current;
+    if (!el) return;
+    resumeAt.current = performance.now() + RESUME_AFTER_MS;
+    el.scrollBy({ left: (dir * el.scrollWidth) / track.length, behavior: "smooth" });
+  };
 
   return (
     <section id="gallery" className="section overflow-hidden">
@@ -67,16 +140,33 @@ export default function Gallery({ instagramHandle }: { instagramHandle: string }
         </div>
       </div>
 
-      <div className="group relative mt-10 md:mt-12">
+      <div
+        className="relative mt-10 md:mt-12"
+        onPointerEnter={(e) => e.pointerType === "mouse" && (hovering.current = true)}
+        onPointerLeave={() => (hovering.current = false)}
+      >
         {/* soft fade at both edges */}
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-brand-black to-transparent sm:w-24" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-brand-black to-transparent sm:w-24" />
 
-        <div className="motion-reduce:overflow-x-auto">
-          <ul
-            className="flex w-max animate-marquee motion-reduce:animate-none [@media(hover:hover)]:group-hover:[animation-play-state:paused]"
-            style={{ animationDuration: `${half.length * SECONDS_PER_SLIDE}s` }}
+        {/* Arrows for mouse users; phones swipe. */}
+        {([
+          [-1, "left-2 sm:left-4", ChevronLeft, "Previous photos"],
+          [1, "right-2 sm:right-4", ChevronRight, "Next photos"],
+        ] as const).map(([dir, pos, Icon, label]) => (
+          <button
+            key={dir}
+            type="button"
+            onClick={() => step(dir)}
+            className={`absolute top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-brand-red [@media(hover:hover)]:flex ${pos}`}
+            aria-label={label}
           >
+            <Icon className="h-6 w-6" />
+          </button>
+        ))}
+
+        <div ref={scroller} className="overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ul className="flex w-max">
             {track.map((s, i) => (
               <li key={`${s.src}-${i}`} aria-hidden={i >= slides.length} className="pr-3 sm:pr-4">
                 <button

@@ -10,8 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["'Bebas Neue'", "Impact", "sans-serif"],
+        // Self-hosted by next/font in app/layout.tsx.
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-bebas)", "Impact", "sans-serif"],
       },
       // Theme-aware colours come from CSS variables in globals.css (light on :root, dark on .dark).
       colors: {

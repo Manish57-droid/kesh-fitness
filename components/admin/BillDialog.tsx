@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Banknote, CalendarClock, ExternalLink, Loader2, Minus, Plus, Search, Smartphone, X } from "lucide-react";
+import { AlertTriangle, Banknote, CalendarClock, ExternalLink, Loader2, Minus, Plus, Search, Smartphone, X } from "lucide-react";
 import Photo from "../Photo";
 import { createClient } from "@/lib/supabase/client";
-import { addMonths, formatDay, formatIST, todayISO } from "@/lib/format";
+import { addMonths, formatDay, formatIST, pendingMonths, todayISO } from "@/lib/format";
 import { payment, rupees } from "@/lib/site";
 import type { PlanContent } from "@/lib/content";
 import type { Member, Order, PaymentMethod, Product } from "@/lib/types";
@@ -11,12 +11,15 @@ import type { Member, Order, PaymentMethod, Product } from "@/lib/types";
 type Props = {
   member: Member;
   plans: PlanContent[];
+  /** Default one-time joining fee (Admin → Website → Plans). */
+  joiningFee: number;
+  today: string;
   onClose: () => void;
   onSaved: (member: Member, receipt: { token: string; receiptNo: string }) => void;
 };
 
-/** Admin: renew a member's monthly fee (optionally with shop products) and record the payment. */
-export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
+/** Admin: renew a member's monthly fee (optionally with the joining fee and shop products) and record the payment. */
+export default function BillDialog({ member, plans, joiningFee: defaultJoiningFee, today, onClose, onSaved }: Props) {
   const initialPlan = member.plan ?? "gym";
   const priceOf = (id: string) => plans.find((p) => p.id === id)?.monthly ?? 0;
 
@@ -26,6 +29,8 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
   const [joinedOn, setJoinedOn] = useState(member.joined_on);
   // Continue from the current due date so the cycle stays on the join day; new members start on their join date.
   const [periodStart, setPeriodStart] = useState(member.paid_until ?? member.joined_on);
+  const [addJoining, setAddJoining] = useState(false);
+  const [joiningFee, setJoiningFee] = useState(defaultJoiningFee);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [utr, setUtr] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -57,6 +62,14 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
     };
   }, [member.id]);
 
+  // Months the member is behind on, counted from their current due date.
+  const pending = member.paid_until ? Math.min(12, pendingMonths(member.paid_until, today)) : 0;
+  const billingAllPending = pending > 0 && months === pending && periodStart === member.paid_until;
+  const billAllPending = () => {
+    setMonths(pending);
+    if (member.paid_until) setPeriodStart(member.paid_until);
+  };
+
   const dueDate = months > 0 && periodStart ? addMonths(periodStart, months) : null;
   const q = productQuery.trim().toLowerCase();
   const productList = q ? products.filter((p) => p.name.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)) : products;
@@ -65,7 +78,8 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
   const feeTotal = months * monthlyFee;
   const productsTotal = chosen.reduce((n, p) => n + p.price * cart[p.id], 0);
   const service = chosen.length > 0 ? payment.serviceCharge : 0;
-  const total = feeTotal + productsTotal + service;
+  const joiningTotal = addJoining ? joiningFee : 0;
+  const total = joiningTotal + feeTotal + productsTotal + service;
 
   const changePlan = (id: PlanContent["id"]) => {
     setPlan(id);
@@ -81,7 +95,7 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
   const setQty = (id: number, qty: number) => setCart((c) => ({ ...c, [id]: Math.max(0, Math.min(50, qty)) }));
 
   const save = async () => {
-    if (months === 0 && chosen.length === 0) return setError("Add at least one month or one product.");
+    if (months === 0 && chosen.length === 0 && joiningTotal === 0) return setError("Add the joining fee, at least one month or one product.");
     setBusy(true);
     setError("");
     const supabase = createClient();
@@ -96,13 +110,17 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
         p_items: chosen.map((p) => ({ product_id: p.id, qty: cart[p.id] })),
         p_method: method,
         p_utr: method === "upi" ? utr : "",
+        // Only sent when used, so bills still work before migration 010 is run.
+        ...(joiningTotal > 0 ? { p_joining_fee: joiningTotal } : {}),
       })
       .single<{ receipt_no: string; token: string }>();
     if (error || !data) {
       setBusy(false);
       return setError(
         error?.code === "PGRST202"
-          ? "Billing isn't set up yet. Run supabase/migrations/009_member_billing.sql in the SQL Editor."
+          ? joiningTotal > 0
+            ? "Joining fee on bills isn't set up yet. Run supabase/migrations/010_existing_members.sql in the SQL Editor."
+            : "Billing isn't set up yet. Run supabase/migrations/009_member_billing.sql in the SQL Editor."
           : error?.message ?? "Couldn't save the bill."
       );
     }
@@ -131,6 +149,23 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
           {/* Monthly fee */}
           <section className="space-y-4">
             <p className="text-xs font-bold uppercase tracking-widest text-brand-red">Monthly fee</p>
+            {pending > 0 && member.paid_until && (
+              <div className="flex flex-wrap items-center gap-3 border-l-4 border-brand-red bg-brand-red/10 p-3 text-sm">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-brand-red" />
+                <span className="min-w-0 flex-1">
+                  <span className="font-semibold">
+                    {pending} month{pending === 1 ? "" : "s"} pending
+                  </span>{" "}
+                  since {formatDay(member.paid_until)}
+                  {pending === 12 && " (12 is the most for one bill)"}.
+                </span>
+                {!billingAllPending && (
+                  <button type="button" onClick={billAllPending} className="btn-primary btn-sm shrink-0">
+                    Bill all {pending} month{pending === 1 ? "" : "s"} · {rupees(pending * monthlyFee)}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="grid gap-2 sm:grid-cols-3">
               {plans.map((p) => (
                 <button
@@ -194,6 +229,34 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
                   Covers {formatDay(periodStart)} to {formatDay(dueDate)}. <span className="font-semibold">Next due date: {formatDay(dueDate)}</span>
                 </span>
               </p>
+            )}
+          </section>
+
+          {/* Joining fee */}
+          <section className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-red">Joining fee</p>
+            <label className={`flex cursor-pointer items-start gap-3 border p-3 transition ${addJoining ? "border-brand-red bg-brand-red/[0.08]" : "border-brand-line"}`}>
+              <input type="checkbox" checked={addJoining} onChange={(e) => setAddJoining(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[#E11D2A]" />
+              <span>
+                <span className="block text-sm font-semibold">Add one-time joining fee</span>
+                <span className="block text-xs text-brand-muted">
+                  For someone who hasn&apos;t paid it yet, e.g. a new member who signed up as &ldquo;Already a member&rdquo;.
+                </span>
+              </span>
+            </label>
+            {addJoining && (
+              <div className="sm:w-1/2">
+                <label htmlFor="b-joining" className="label">Joining fee (₹)</label>
+                <input
+                  id="b-joining"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  className="input"
+                  value={joiningFee}
+                  onChange={(e) => setJoiningFee(Math.max(0, Math.round(Number(e.target.value) || 0)))}
+                />
+              </div>
             )}
           </section>
 
@@ -282,6 +345,12 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
         {/* Summary + save */}
         <div className="border-t border-brand-line p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
           <dl className="space-y-1 text-sm">
+            {joiningTotal > 0 && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-fg/70">Joining fee (one-time)</dt>
+                <dd>{rupees(joiningTotal)}</dd>
+              </div>
+            )}
             {months > 0 && (
               <div className="flex justify-between gap-4">
                 <dt className="text-fg/70">
@@ -310,7 +379,7 @@ export default function BillDialog({ member, plans, onClose, onSaved }: Props) {
               <button type="button" onClick={onClose} className="btn-ghost btn-sm">
                 Cancel
               </button>
-              <button type="button" onClick={save} disabled={busy || total === 0 && months === 0} className="btn-primary btn-sm">
+              <button type="button" onClick={save} disabled={busy || (total === 0 && months === 0)} className="btn-primary btn-sm">
                 {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Save &amp; mark paid
               </button>

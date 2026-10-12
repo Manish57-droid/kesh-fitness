@@ -8,11 +8,14 @@ export const metadata: Metadata = { title: "Transactions – Kesh Fitness Admin"
 
 export default async function TransactionsPage() {
   const { supabase } = await requireAdmin();
+  // Removes transactions older than 24 months (migration 011). Normally a daily job does this;
+  // this is the fallback. Before the migration is run the call just fails, which is fine.
+  await supabase.rpc("admin_purge_old_orders");
   const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000);
   const missing = error?.code === "42P01" || error?.code === "PGRST205";
   return (
     <>
-      <AdminHeader title="Transactions" subtitle="Shop orders. Confirm UPI payments after checking the UTR in Paytm, and mark cash once collected." />
+      <AdminHeader title="Transactions" subtitle="Fees and shop orders. Confirm UPI payments after checking the UTR in Paytm, and mark cash once collected. Kept for 24 months." />
       {missing ? (
         <div className="card p-8 text-center">
           <p className="font-display text-2xl tracking-wide">Orders not set up yet</p>

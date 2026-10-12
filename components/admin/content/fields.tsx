@@ -181,7 +181,8 @@ export function ImageField({
 }: {
   label: string;
   value: string;
-  defaultValue: string;
+  /** Shows "Use original photo" when the value differs from it. */
+  defaultValue?: string;
   onChange: (url: string) => void;
   aspect?: string;
 }) {
@@ -214,9 +215,9 @@ export function ImageField({
         <div className="space-y-2">
           <button type="button" onClick={() => input.current?.click()} disabled={busy} className="btn-ghost btn-sm">
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-            {busy ? "Uploading…" : "Change photo"}
+            {busy ? "Uploading…" : value ? "Change photo" : "Upload photo"}
           </button>
-          {value !== defaultValue && (
+          {defaultValue !== undefined && value !== defaultValue && (
             <button type="button" onClick={() => onChange(defaultValue)} className="flex items-center gap-1.5 text-xs text-brand-muted hover:text-fg">
               <RotateCcw className="h-3 w-3" /> Use original photo
             </button>

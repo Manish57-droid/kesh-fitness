@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <>
       <AdminNav />
-      <main className="mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 lg:px-8 lg:pb-16 lg:pt-28">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 lg:px-8 lg:pb-16 lg:pt-28 print:max-w-none print:p-0">{children}</main>
     </>
   );
 }

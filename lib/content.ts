@@ -43,6 +43,8 @@ export type SiteContent = {
     badgeLabel: string;
     stats: { value: string; label: string }[];
     image: string;
+    /** More photos; with any here the About photo becomes a slideshow. */
+    images: string[];
   };
   programs: {
     eyebrow: string;
@@ -65,6 +67,8 @@ export type SiteContent = {
     highlight: string;
     subtitle: string;
     joiningFee: number;
+    /** Join form shows "Already a member" (no fees). Switched on/off in Admin → Active Members. */
+    existingMembers: boolean;
     items: PlanContent[];
     /** Online coaching (not a gym membership); visitors email the trainer. */
     online: { enabled: boolean; title: string; price: number; duration: string; text: string; perks: string[] };
@@ -118,6 +122,7 @@ export const defaultContent: SiteContent = {
       { value: "6 Days", label: "A Week" },
     ],
     image: "/images/about.jpg",
+    images: [],
   },
   programs: {
     eyebrow: "What We Offer",
@@ -150,6 +155,7 @@ export const defaultContent: SiteContent = {
     highlight: "Plan",
     subtitle: "Simple monthly plans. No hidden charges.",
     joiningFee: 1000,
+    existingMembers: true,
     items: [
       {
         id: "gym",

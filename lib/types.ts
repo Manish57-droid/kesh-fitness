@@ -108,6 +108,8 @@ export type Member = {
   notes: string | null;
   is_active: boolean;
   join_request_id: number | null;
+  /** Added themselves through the join form's "Already a member" option (migration 010). */
+  self_registered?: boolean;
   created_at: string;
   updated_at: string;
 };

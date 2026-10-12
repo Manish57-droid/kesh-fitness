@@ -48,6 +48,16 @@ export function addMonths(iso: string, months: number) {
   return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}-${String(target.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Overdue monthly cycles for a member paid up to `paidUntil`, as of `today` (both "YYYY-MM-DD").
+ * Paid till 1 Sep, today 12 Oct → 2 (September and October). 0 if not late yet.
+ */
+export function pendingMonths(paidUntil: string, today: string, max = 24) {
+  let n = 0;
+  while (n < max && addMonths(paidUntil, n) < today) n++;
+  return n;
+}
+
 /** Whole days from `from` to `to` (both "YYYY-MM-DD"); negative if `to` is earlier. */
 export function daysBetween(from: string, to: string) {
   return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
@@ -58,6 +68,27 @@ export function formatDay(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
+
+/** "2026-10" for a timestamp, in India time. */
+export const monthKey = (iso: string | Date) =>
+  new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit" }).slice(0, 7);
+
+/** Month key `n` months after `key` (negative = before): shiftMonth("2026-01", -1) → "2025-12". */
+export const shiftMonth = (key: string, n: number) => {
+  const [y, m] = key.split("-").map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
+/** Transactions are kept for the current month and the 24 before it (migration 011's orders_keep_from()). */
+export const KEEP_MONTHS = 24;
+export const keepFromMonth = (currentKey: string) => shiftMonth(currentKey, -KEEP_MONTHS);
+
+/** "2026-10" → "October 2026". */
+export const monthLabel = (key: string) => {
+  const [y, m] = key.split("-").map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+};
 
 /** Date and time in India, e.g. "10 Oct 2026, 2:35 pm". */
 export function formatIST(iso: string) {
