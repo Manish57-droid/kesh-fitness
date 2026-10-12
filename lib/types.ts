@@ -8,17 +8,6 @@ export type Profile = {
   created_at: string;
 };
 
-/** A planner entry, stored in the visitor's browser. */
-export type Workout = {
-  id: string;
-  day: number; // 0 = Monday … 6 = Sunday
-  exercise: string;
-  sets: number | null;
-  reps: string | null;
-  weight: string | null;
-  notes: string | null;
-};
-
 /** A visitor's message as the admin sees it. */
 export type Message = {
   id: number;

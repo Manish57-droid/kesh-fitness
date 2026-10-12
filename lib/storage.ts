@@ -16,7 +16,6 @@ export function writeJSON(key: string, value: unknown) {
 }
 
 export const KEYS = {
-  workouts: "kesh-workouts",
   messageTokens: "kesh-message-tokens",
   readNotifications: "kesh-read-notifications",
   orders: "kesh-orders", // [{ token, receiptNo }] of shop orders placed on this device

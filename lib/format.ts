@@ -1,8 +1,3 @@
-export const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-/** Index of today in DAYS (Monday = 0). */
-export const todayIndex = () => (new Date().getDay() + 6) % 7;
-
 export function timeAgo(iso: string | null) {
   if (!iso) return "Never";
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);

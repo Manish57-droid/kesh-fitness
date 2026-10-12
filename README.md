@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-The site and the workout planner work without any setup. The join form, message form, announcements and the admin panel need Supabase (below).
+The site works without any setup. The join form, message form, announcements and the admin panel need Supabase (below).
 
 ## Supabase setup
 
@@ -62,7 +62,6 @@ The site and the workout planner work without any setup. The join form, message 
 |---|---|---|
 | View the whole website, light/dark theme | ✓ | ✓ |
 | Fill the "Join Kesh Fitness" form | ✓ | ✓ |
-| Weekly workout planner (saved on their own phone) | ✓ | ✓ |
 | Message the gym and see replies on the site | ✓ | ✓ |
 | Announcement bell + live pop-ups | ✓ | ✓ |
 | Shop page: order with quantity, pay by UPI or cash, get a receipt | ✓ | ✓ |
@@ -81,4 +80,3 @@ Access rules are enforced in the database with Row Level Security. Visitors can 
 - Gym details, texts, photos, prices, timings: **Admin → Website** (defaults in [`lib/content.ts`](lib/content.ts))
 - UPI ID and service charge: [`lib/site.ts`](lib/site.ts)
 - Photos: [`public/images/`](public/images/) (see the README there)
-- Exercise suggestions in the planner: [`lib/exercises.ts`](lib/exercises.ts)

@@ -13,7 +13,6 @@ const links = [
   { label: "Plans", href: "/#plans" },
   { label: "Join", href: "/#join" },
   { label: "Shop", href: "/shop" },
-  { label: "Planner", href: "/#planner" },
   { label: "Contact", href: "/#contact" },
   { label: "Visit", href: "/#visit" },
 ];

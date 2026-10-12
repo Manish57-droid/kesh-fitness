@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import Marquee from "@/components/Marquee";
 import About from "@/components/About";
 import Programs from "@/components/Programs";
-import WorkoutPlanner from "@/components/features/WorkoutPlanner";
 import Coach from "@/components/Coach";
 import Plans from "@/components/Plans";
 import JoinForm from "@/components/features/JoinForm";
@@ -35,7 +34,6 @@ export default async function Home() {
         <Plans c={c.plans} email={c.gym.email} />
         <JoinForm plans={c.plans} gymName={c.gym.name} />
         <Shop preview />
-        <WorkoutPlanner />
         <MessageGym gym={c.gym} />
         <Visit gym={c.gym} />
         <JoinCTA c={c.joinCta} />
