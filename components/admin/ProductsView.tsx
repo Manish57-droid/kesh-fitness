@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Eye, EyeOff, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Photo from "../Photo";
 import ProductForm, { storagePath } from "./ProductForm";
@@ -16,6 +16,9 @@ const sortProducts = (list: Product[]) =>
 
 export default function ProductsView({ initial }: Props) {
   const [products, setProducts] = useState(initial);
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setProducts(initial), [initial]);
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");

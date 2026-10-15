@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Banknote, CheckCircle2, Clock, Printer, Share2, XCircle } from "lucide-react";
 import PaymentPanel from "./PaymentPanel";
@@ -11,20 +11,31 @@ import type { GymDetails } from "@/lib/content";
 import type { PublicOrder } from "@/lib/types";
 
 const POLL_MS = 15_000;
+const RETRY_MS = 5_000;
 
 export default function ReceiptView({ token, gym }: { token: string; gym: GymDetails }) {
   const [order, setOrder] = useState<PublicOrder | null | undefined>(undefined);
   const [shared, setShared] = useState(false);
 
+  const loaded = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return setOrder(null);
-    const { data } = await createClient().rpc("get_order", { p_token: token }).maybeSingle<PublicOrder>();
+    const { data, error } = await createClient().rpc("get_order", { p_token: token }).maybeSingle<PublicOrder>();
+    // A failed check (e.g. patchy mobile data) keeps what's on screen instead of saying "not found".
+    // Polling below retries once loaded; before that, retry shortly. 22P02 = malformed link.
+    if (error && error.code !== "22P02") {
+      if (!loaded.current) setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+      return;
+    }
+    loaded.current = true;
     setOrder(data ?? null);
   }, [token]);
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, attempt]);
 
   // Keep checking while payment is pending, so the receipt turns PAID by itself.
   useEffect(() => {

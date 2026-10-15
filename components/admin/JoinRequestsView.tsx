@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Banknote, CheckCircle2, ExternalLink, Mail, MessageCircle, Phone, Search, Smartphone, Trash2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate, formatIST, timeAgo } from "@/lib/format";
@@ -41,6 +41,9 @@ type Props = {
 
 export default function JoinRequestsView({ initial, plans }: Props) {
   const [requests, setRequests] = useState(initial);
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setRequests(initial), [initial]);
   const [filter, setFilter] = useState<Filter>(initial.some((r) => r.payment_status === "verifying") ? "verify" : "all");
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);

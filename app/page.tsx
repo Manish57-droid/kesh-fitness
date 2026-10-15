@@ -14,10 +14,18 @@ import JoinCTA from "@/components/JoinCTA";
 import Footer from "@/components/Footer";
 import MobileNav from "@/components/MobileNav";
 import HashScroll from "@/components/HashScroll";
+import type { Metadata } from "next";
 import { getContent } from "@/lib/content-server";
+import { openGraph } from "@/lib/seo";
 
 // Re-built when the admin saves content (see /api/revalidate), and at least every 10 minutes.
 export const revalidate = 600;
+
+/** Link previews show the top-banner photo the admin chose. */
+export async function generateMetadata(): Promise<Metadata> {
+  const c = await getContent();
+  return { openGraph: { ...openGraph, images: [{ url: c.hero.image || "/images/hero.jpg", alt: c.gym.name }] } };
+}
 
 export default async function Home() {
   const c = await getContent();

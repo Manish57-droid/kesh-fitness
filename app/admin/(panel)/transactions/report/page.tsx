@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import MonthlyReport from "@/components/admin/MonthlyReport";
+import RefreshIfStale from "@/components/admin/RefreshIfStale";
 import { requireAdmin } from "@/lib/auth";
 import { getContent } from "@/lib/content-server";
 import { monthKey } from "@/lib/format";
@@ -29,5 +30,10 @@ export default async function ReportPage({ searchParams }: { searchParams: { mon
     getContent(),
   ]);
 
-  return <MonthlyReport month={month} orders={(data as Order[]) ?? []} error={error?.message ?? ""} gym={c.gym} />;
+  return (
+    <>
+      <RefreshIfStale renderedAt={Date.now()} />
+      <MonthlyReport month={month} orders={(data as Order[]) ?? []} error={error?.message ?? ""} gym={c.gym} />
+    </>
+  );
 }

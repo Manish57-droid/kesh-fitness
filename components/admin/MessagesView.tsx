@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Loader2, MessageCircle, Phone, Reply, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/format";
@@ -19,6 +19,9 @@ export const whatsappLink = (phone: string) => {
 
 export default function MessagesView({ initial }: Props) {
   const [messages, setMessages] = useState(initial);
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setMessages(initial), [initial]);
   const [filter, setFilter] = useState<Filter>("all");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);

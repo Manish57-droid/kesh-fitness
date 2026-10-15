@@ -48,6 +48,9 @@ const sumPaid = (list: Order[]) => list.filter((o) => o.status === "paid").reduc
 
 export default function TransactionsView({ initial }: { initial: Order[] }) {
   const [orders, setOrders] = useState(initial);
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setOrders(initial), [initial]);
   const [current] = useState(() => monthKey(new Date()));
   const [view, setView] = useState<View>({ kind: "month", key: monthKey(new Date()) });
   const [filter, setFilter] = useState<Filter>("all");

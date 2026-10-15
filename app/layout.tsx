@@ -1,13 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/auth/AuthProvider";
+import { description, openGraph, title } from "@/lib/seo";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
-  title: "Kesh Fitness – Unisex Multi Gym near Silli Stadium",
-  description:
-    "Kesh Fitness is a unisex multi gym near Silli Stadium. Strength training, fat loss, muscle gain and personal guidance from Team Invincible Kesh.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  // Link preview on WhatsApp, Instagram, Facebook etc. The home page swaps in the current top-banner photo.
+  openGraph,
+  twitter: { card: "summary_large_image" },
 };
+
+export const viewport: Viewport = { themeColor: "#0A0A0B" };
 
 // Served from this site (no extra trip to Google) and preloaded, so text shows sooner.
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });

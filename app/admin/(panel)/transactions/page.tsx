@@ -8,10 +8,12 @@ export const metadata: Metadata = { title: "Transactions – Kesh Fitness Admin"
 
 export default async function TransactionsPage() {
   const { supabase } = await requireAdmin();
-  // Removes transactions older than 24 months (migration 011). Normally a daily job does this;
-  // this is the fallback. Before the migration is run the call just fails, which is fine.
-  await supabase.rpc("admin_purge_old_orders");
-  const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000);
+  const [{ data, error }] = await Promise.all([
+    supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5000),
+    // Removes transactions older than 24 months (migration 011). Normally a daily job does this;
+    // this is the fallback, run alongside so it doesn't slow the page. Fails harmlessly before the migration.
+    supabase.rpc("admin_purge_old_orders"),
+  ]);
   const missing = error?.code === "42P01" || error?.code === "PGRST205";
   return (
     <>

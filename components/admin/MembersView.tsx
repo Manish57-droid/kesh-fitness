@@ -38,6 +38,9 @@ export default function MembersView({ initial, fromRequest, tableMissing, plans,
   const [today, setToday] = useState<string | null>(null);
   useEffect(() => setToday(todayISO()), []);
 
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setMembers(initial), [initial]);
+
   if (tableMissing) {
     return (
       <div className="card flex flex-col items-center p-8 text-center">

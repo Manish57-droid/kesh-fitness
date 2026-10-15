@@ -21,12 +21,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Also refreshes an expired session. Verified locally when the project uses signing keys.
+  const { data } = await supabase.auth.getClaims();
 
   const path = request.nextUrl.pathname;
-  if (!user && isProtected(path)) {
+  if (!data?.claims.sub && isProtected(path)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);

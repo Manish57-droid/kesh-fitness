@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Banknote, Clock, PartyPopper, Printer, XCircle } from "lucide-react";
 import PaymentPanel from "./PaymentPanel";
@@ -11,6 +11,7 @@ import type { GymDetails, PlanContent } from "@/lib/content";
 import type { PublicJoinRequest } from "@/lib/types";
 
 const POLL_MS = 15_000;
+const RETRY_MS = 5_000;
 
 type Props = { token: string; gym: GymDetails; plans: PlanContent[] };
 
@@ -18,15 +19,25 @@ type Props = { token: string; gym: GymDetails; plans: PlanContent[] };
 export default function JoinStatusView({ token, gym, plans }: Props) {
   const [req, setReq] = useState<PublicJoinRequest | null | undefined>(undefined);
 
+  const loaded = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return setReq(null);
-    const { data } = await createClient().rpc("get_join_request", { p_token: token }).maybeSingle<PublicJoinRequest>();
+    const { data, error } = await createClient().rpc("get_join_request", { p_token: token }).maybeSingle<PublicJoinRequest>();
+    // A failed check (e.g. patchy mobile data) keeps what's on screen instead of saying "not found".
+    // Polling below retries once loaded; before that, retry shortly. 22P02 = malformed link.
+    if (error && error.code !== "22P02") {
+      if (!loaded.current) setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+      return;
+    }
+    loaded.current = true;
     setReq(data ?? null);
   }, [token]);
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, attempt]);
 
   // Keep checking until the admin confirms the payment.
   useEffect(() => {

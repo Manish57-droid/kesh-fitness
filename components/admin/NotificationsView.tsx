@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Megaphone, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/format";
@@ -11,6 +11,9 @@ type Props = {
 
 export default function NotificationsView({ initial }: Props) {
   const [notifications, setNotifications] = useState(initial);
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setNotifications(initial), [initial]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);

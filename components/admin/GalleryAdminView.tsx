@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, ImagePlus, Images, Loader2, Trash2 } from "lucide-react";
 import Photo from "../Photo";
 import { createClient } from "@/lib/supabase/client";
@@ -13,6 +13,9 @@ const byOrder = (a: GalleryPhoto, b: GalleryPhoto) => a.sort_order - b.sort_orde
 
 export default function GalleryAdminView({ initial, tableMissing }: { initial: GalleryPhoto[]; tableMissing: boolean }) {
   const [photos, setPhotos] = useState([...initial].sort(byOrder));
+
+  // Fresh data from a background refresh (RefreshIfStale) replaces the list.
+  useEffect(() => setPhotos([...initial].sort(byOrder)), [initial]);
   const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);

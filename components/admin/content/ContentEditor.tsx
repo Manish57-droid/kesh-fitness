@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, ExternalLink, Loader2, RotateCcw, Save } from "lucide-react";
 import { Area, ImageField, Lines, List, Num, Text, Toggle } from "./fields";
 import ProgramIcon from "../../ProgramIcon";
@@ -25,7 +26,16 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const router = useRouter();
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+
+  // Fresh content from a background refresh, unless the admin is in the middle of editing.
+  useEffect(() => {
+    if (dirty) return;
+    setSaved(initial);
+    setDraft(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   // Warn before leaving with unsaved changes.
   useEffect(() => {
@@ -64,6 +74,8 @@ export default function ContentEditor({ initial, tableMissing }: { initial: Site
     setSaved(clean);
     setDraft(clean);
     setBusy(false);
+    // Drops the browser's kept copies of admin pages, so coming back here never shows the old content.
+    router.refresh();
     setNotice("Saved. The website is updated.");
     setTimeout(() => setNotice(""), 4000);
   };
