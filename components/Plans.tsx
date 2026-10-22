@@ -1,4 +1,5 @@
-import { BadgeIndianRupee, Check, Mail, Trophy } from "lucide-react";
+import Link from "next/link";
+import { BadgeIndianRupee, Check, Mail, RefreshCw, Trophy } from "lucide-react";
 import DumbbellArt from "./DumbbellArt";
 import JoinPlanButton from "./features/JoinPlanButton";
 import { rupees } from "@/lib/site";
@@ -69,6 +70,18 @@ export default function Plans({ c, email }: { c: SiteContent["plans"]; email: st
             </p>
           </div>
         )}
+
+        {/* Existing members pay their monthly fee online */}
+        <div className="mx-auto mt-6 flex max-w-6xl flex-col gap-4 border border-brand-line bg-brand-black p-4 sm:flex-row sm:items-center sm:p-5">
+          <RefreshCw className="hidden h-8 w-8 shrink-0 text-brand-red sm:block" strokeWidth={1.5} />
+          <p className="flex-1 text-sm text-fg/80">
+            <span className="font-semibold text-fg">Already a member? Renew your monthly fee online.</span>
+            <span className="block text-brand-muted">Enter your mobile number, choose the months and pay by UPI.</span>
+          </p>
+          <Link href="/renew" className="btn-primary btn-sm shrink-0">
+            Renew monthly fee
+          </Link>
+        </div>
 
         {/* Online coaching: enquiries by email, not a gym membership */}
         {c.online.enabled && (

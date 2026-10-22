@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Search,
   Smartphone,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -56,6 +57,7 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -104,6 +106,7 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
   const showMonthTable = view.kind === "all" && !searching;
   const active = FILTERS.find((f) => f.id === filter)!;
   const shown = base.filter(active.test);
+  const cancelledHere = shown.filter((o) => o.status === "cancelled");
 
   const openMonth = (key: string) => {
     setView({ kind: "month", key });
@@ -126,6 +129,37 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
     const { data } = await supabase.from("orders").select("*").eq("id", o.id).single();
     if (data) setOrders((list) => list.map((x) => (x.id === o.id ? (data as Order) : x)));
     setBusyId(null);
+  };
+
+  const notInstalled = (code?: string) =>
+    code === "PGRST202" ? "Deleting isn't set up yet. Run supabase/migrations/013_delete_orders.sql in the SQL Editor." : null;
+
+  // Cancels first (so a paid bill rolls the due date back), then removes it for good.
+  const remove = async (o: Order) => {
+    const warning =
+      o.status === "paid"
+        ? `Delete ${o.receipt_no} (${rupees(o.total)}, paid)?
+
+It will be cancelled and removed from reports and totals. This can't be undone.`
+        : `Delete ${o.receipt_no}? This can't be undone.`;
+    if (!confirm(warning)) return;
+    setBusyId(o.id);
+    setError("");
+    const { error } = await createClient().rpc("admin_delete_order", { p_id: o.id });
+    setBusyId(null);
+    if (error) return setError(notInstalled(error.code) ?? error.message);
+    setOrders((list) => list.filter((x) => x.id !== o.id));
+  };
+
+  const removeCancelled = async (list: Order[]) => {
+    if (!confirm(`Delete all ${list.length} cancelled transaction${list.length === 1 ? "" : "s"} here? This can't be undone.`)) return;
+    setBulkBusy(true);
+    setError("");
+    const ids = list.map((o) => o.id);
+    const { error } = await createClient().rpc("admin_delete_cancelled_orders", { p_ids: ids });
+    setBulkBusy(false);
+    if (error) return setError(notInstalled(error.code) ?? error.message);
+    setOrders((all) => all.filter((o) => !ids.includes(o.id)));
   };
 
   const exportCsv = () => {
@@ -278,6 +312,13 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
           </button>
         ))}
       </div>
+      {cancelledHere.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <button onClick={() => removeCancelled(cancelledHere)} disabled={bulkBusy} className="btn-ghost btn-sm text-brand-red">
+            <Trash2 className="h-3.5 w-3.5" /> Delete all cancelled · {cancelledHere.length}
+          </button>
+        </div>
+      )}
       {error && <p className="mt-3 text-sm text-brand-red">{error}</p>}
 
       {shown.length === 0 ? (
@@ -293,6 +334,7 @@ export default function TransactionsView({ initial }: { initial: Order[] }) {
               busy={busyId === o.id}
               showMonth={searching || view.kind === "attention"}
               onStatus={(s) => setStatus(o, s)}
+              onDelete={() => remove(o)}
             />
           ))}
         </ul>
@@ -340,11 +382,13 @@ function OrderCard({
   busy,
   showMonth,
   onStatus,
+  onDelete,
 }: {
   order: Order;
   busy: boolean;
   showMonth: boolean;
   onStatus: (s: "paid" | "cancelled") => void;
+  onDelete: () => void;
 }) {
   const s = STATUS[o.status];
   const open = o.status === "pending" || o.status === "verifying";
@@ -408,6 +452,9 @@ function OrderCard({
             <XCircle className="h-3.5 w-3.5" /> Cancel
           </button>
         )}
+        <button onClick={onDelete} disabled={busy} className="btn-ghost btn-sm text-brand-red" title={o.status === "cancelled" ? "Delete for good" : "Cancel and delete for good"}>
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </button>
       </div>
     </li>
   );

@@ -12,6 +12,7 @@ const links = [
   { label: "Programs", href: "/#programs" },
   { label: "Plans", href: "/#plans" },
   { label: "Join", href: "/#join" },
+  { label: "Renew", href: "/renew" },
   { label: "Shop", href: "/shop" },
   { label: "Contact", href: "/#contact" },
   { label: "Visit", href: "/#visit" },

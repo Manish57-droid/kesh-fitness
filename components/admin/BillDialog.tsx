@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Banknote, CalendarClock, ExternalLink, Loader2, Minus, Plus, Search, Smartphone, X } from "lucide-react";
 import Photo from "../Photo";
+import UpiQr from "../shop/UpiQr";
 import { createClient } from "@/lib/supabase/client";
 import { addMonths, formatDay, formatIST, pendingMonths, todayISO } from "@/lib/format";
 import { payment, rupees } from "@/lib/site";
@@ -312,9 +313,23 @@ export default function BillDialog({ member, plans, joiningFee: defaultJoiningFe
               ))}
             </div>
             {method === "upi" && (
-              <div>
-                <label htmlFor="b-utr" className="label">UTR (optional)</label>
-                <input id="b-utr" className="input font-mono uppercase" value={utr} onChange={(e) => setUtr(e.target.value.replace(/\s/g, ""))} maxLength={22} placeholder="12-digit UPI reference" />
+              <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+                {total > 0 && (
+                  <div className="flex flex-col items-center gap-1">
+                    <UpiQr amount={total} note={`Fee ${member.phone}`} className="h-44 w-44" />
+                    <p className="text-[11px] text-brand-muted">Scan to pay {rupees(total)}</p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  <p className="text-xs text-brand-muted">
+                    Let the member (or anyone paying for them) scan this QR. It has the exact amount; it updates if you change the bill.
+                    UPI ID: <span className="font-mono text-fg">{payment.upiId}</span>
+                  </p>
+                  <div>
+                    <label htmlFor="b-utr" className="label">UTR (optional)</label>
+                    <input id="b-utr" className="input font-mono uppercase" value={utr} onChange={(e) => setUtr(e.target.value.replace(/\s/g, ""))} maxLength={22} placeholder="12-digit UPI reference" />
+                  </div>
+                </div>
               </div>
             )}
           </section>

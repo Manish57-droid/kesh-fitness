@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { useState } from "react";
 import { Check, Copy, Loader2, Smartphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import UpiQr from "./UpiQr";
 import { payment, rupees, upiLink } from "@/lib/site";
 type Props = {
   amount: number;
@@ -16,17 +16,11 @@ type Props = {
 /** UPI payment step (shown while an order or membership payment is waiting). */
 export default function PaymentPanel({ amount, receiptNo, token, utrFunction, onSubmitted }: Props) {
   const link = upiLink(amount, receiptNo);
-  const [qr, setQr] = useState("");
   const [showShopQr, setShowShopQr] = useState(false);
   const [copied, setCopied] = useState(false);
   const [utr, setUtr] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-
-  // QR with the exact amount and receipt number, for paying from a computer.
-  useEffect(() => {
-    QRCode.toDataURL(link, { width: 480, margin: 1 }).then(setQr).catch(() => setQr(""));
-  }, [link]);
 
   const copyUpi = async () => {
     try {
@@ -77,12 +71,8 @@ export default function PaymentPanel({ amount, receiptNo, token, utrFunction, on
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          {qr ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={qr} alt={`UPI QR code for ${rupees(amount)}`} className="h-48 w-48 bg-white p-2" />
-          ) : (
-            <div className="h-48 w-48 animate-pulse bg-white/80" />
-          )}
+          {/* Exact amount and receipt number, for paying from a computer. */}
+          <UpiQr amount={amount} note={receiptNo} />
           <p className="text-[11px] text-brand-muted">Scan to pay {rupees(amount)}</p>
           <button type="button" onClick={() => setShowShopQr(!showShopQr)} className="text-[11px] text-brand-red hover:underline">
             {showShopQr ? "Hide" : "Use"} our shop QR instead
